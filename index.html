@@ -501,6 +501,148 @@ button { cursor: pointer; }
   border-top: 1px solid var(--line-soft);
 }
 
+/* ===== Date chip (composer) ===== */
+.chip.date-chip {
+  display: inline-flex;
+  align-items: center;
+}
+.chip.date-chip.active {
+  background: var(--accent-2);
+  color: var(--paper);
+  border-color: var(--accent-2);
+}
+
+/* ===== Item due-date badge ===== */
+.item-due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent-2);
+  font-weight: 500;
+}
+.item-due.overdue { color: var(--accent); }
+.item-due.today { color: var(--done); }
+
+/* ===== Calendar ===== */
+.calendar {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow);
+}
+.cal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.cal-month {
+  font-family: var(--serif);
+  font-size: 26px;
+  line-height: 1;
+  flex: 1;
+  text-align: center;
+}
+.cal-month em { color: var(--accent); font-style: italic; font-size: 18px; margin-left: 6px; }
+.cal-nav { width: 32px; height: 32px; border-radius: 4px; }
+.cal-today {
+  margin-left: 4px;
+  font-size: 10px;
+  padding: 6px 10px;
+}
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  text-align: center;
+  padding: 8px 0 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+.cal-cell {
+  aspect-ratio: 1 / 1;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px 0 4px;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  color: var(--ink);
+  transition: background 0.12s ease;
+}
+.cal-cell:hover { background: var(--bg-soft); }
+.cal-cell.other-month { color: var(--ink-muted); opacity: 0.4; }
+.cal-cell.today { font-weight: 600; }
+.cal-cell.today::before {
+  content: '';
+  position: absolute;
+  top: 4px; left: 50%;
+  transform: translateX(-50%);
+  width: 22px; height: 22px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  z-index: 0;
+}
+.cal-cell.today > span { position: relative; z-index: 1; }
+.cal-cell.selected { background: var(--ink); color: var(--paper); }
+.cal-cell.selected.today::before { border-color: var(--paper); }
+.cal-dots {
+  display: flex;
+  gap: 3px;
+  margin-top: auto;
+  margin-bottom: 4px;
+  min-height: 6px;
+}
+.cal-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.cal-dot.idea { background: var(--accent-2); }
+.cal-dot.note { background: var(--low); }
+.cal-cell.selected .cal-dot { background: var(--paper); }
+.cal-day-list {
+  margin-top: 18px;
+}
+.cal-day-list-empty {
+  padding: 24px 0 8px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-family: var(--serif);
+  font-size: 18px;
+  font-style: italic;
+}
+.cal-day-header {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--line);
+}
+@media (max-width: 720px) {
+  .calendar { padding: 14px 12px 18px; }
+  .cal-cell { font-size: 13px; padding: 4px 0 2px; }
+  .cal-month { font-size: 22px; }
+}
+
 /* ===== AI Panel ===== */
 .fab {
   position: fixed;
@@ -907,6 +1049,7 @@ button { cursor: pointer; }
     <button class="tab active" data-tab="tasks">Задачи <span class="count" id="cntTasks">0</span></button>
     <button class="tab" data-tab="ideas">Идеи <span class="count" id="cntIdeas">0</span></button>
     <button class="tab" data-tab="notes">Заметки <span class="count" id="cntNotes">0</span></button>
+    <button class="tab" data-tab="calendar">Календарь</button>
   </nav>
 
   <!-- COMPOSER -->
@@ -916,6 +1059,10 @@ button { cursor: pointer; }
       <button class="chip high" data-priority="high">Высокий</button>
       <button class="chip med active" data-priority="medium">Средний</button>
       <button class="chip low" data-priority="low">Низкий</button>
+      <button class="chip date-chip" id="composerDate" type="button" title="Привязать к дате">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="composerDateLabel">Дата</span>
+      </button>
+      <input type="date" id="composerDateInput" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
       <button class="mic-btn" id="composerMic" type="button" title="Голосовой ввод" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
       </button>
@@ -935,6 +1082,21 @@ button { cursor: pointer; }
 
   <!-- ITEMS -->
   <div class="items" id="items"></div>
+
+  <!-- CALENDAR -->
+  <div class="calendar" id="calendar" hidden>
+    <div class="cal-header">
+      <button class="icon-btn cal-nav" id="calPrev" title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="cal-month" id="calMonth"></div>
+      <button class="icon-btn cal-nav" id="calNext" title="Вперёд"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      <button class="btn cal-today" id="calToday" type="button">Сегодня</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-day-list" id="calDayList"></div>
+  </div>
 </div>
 
 <!-- FAB -->
@@ -1021,7 +1183,10 @@ const defaultState = {
   },
   ui: {
     activeTab: 'tasks',
-    composerPriority: 'medium'
+    composerPriority: 'medium',
+    composerDate: null,
+    calendarMonth: null,
+    calendarSelected: null
   },
   chat: []
 };
@@ -1106,21 +1271,21 @@ function syncTabUI() {
     t.classList.toggle('active', t.dataset.tab === state.ui.activeTab)
   );
 
-  // Composer adapts to active tab
-  if (state.ui.activeTab === 'tasks') {
-    composerInput.placeholder = 'Записать задачу…';
-    composerOptions.style.display = 'flex';
-  } else if (state.ui.activeTab === 'ideas') {
-    composerInput.placeholder = 'Записать идею…';
-    composerOptions.style.display = 'flex';
-    // Для идей приоритеты не нужны, но оставим кнопку добавить
-  } else {
-    composerInput.placeholder = 'Заголовок заметки…';
-    composerOptions.style.display = 'flex';
-  }
-  // Скрыть приоритеты для не-задач
-  $$('#composerOptions .chip').forEach((c) => {
-    c.style.display = state.ui.activeTab === 'tasks' ? '' : 'none';
+  const tab = state.ui.activeTab;
+  const isCalendar = tab === 'calendar';
+
+  composerEl.hidden = isCalendar;
+  $('.search-row').hidden = isCalendar;
+  itemsEl.hidden = isCalendar;
+  $('#calendar').hidden = !isCalendar;
+
+  if (tab === 'tasks') composerInput.placeholder = 'Записать задачу…';
+  else if (tab === 'ideas') composerInput.placeholder = 'Записать идею…';
+  else if (tab === 'notes') composerInput.placeholder = 'Заголовок заметки…';
+
+  // Hide priority chips outside tasks
+  $$('#composerOptions .chip[data-priority]').forEach((c) => {
+    c.style.display = tab === 'tasks' ? '' : 'none';
   });
 }
 
@@ -1128,10 +1293,10 @@ function syncTabUI() {
 //   COMPOSER
 // ============================================================
 composerOptions.addEventListener('click', (e) => {
-  const chip = e.target.closest('.chip');
+  const chip = e.target.closest('.chip[data-priority]');
   if (!chip) return;
   state.ui.composerPriority = chip.dataset.priority;
-  $$('#composerOptions .chip').forEach((c) =>
+  $$('#composerOptions .chip[data-priority]').forEach((c) =>
     c.classList.toggle('active', c.dataset.priority === state.ui.composerPriority)
   );
   saveState();
@@ -1144,6 +1309,58 @@ composerInput.addEventListener('keydown', (e) => {
   }
 });
 composerSubmit.onclick = handleAdd;
+
+// Date chip: opens hidden native date input
+const composerDateChip = $('#composerDate');
+const composerDateInput = $('#composerDateInput');
+const composerDateLabel = $('#composerDateLabel');
+
+function syncComposerDateChip() {
+  if (state.ui.composerDate) {
+    composerDateChip.classList.add('active');
+    composerDateLabel.textContent = formatShortDate(state.ui.composerDate) + ' ✕';
+    composerDateChip.title = 'Кликни, чтобы убрать дату';
+  } else {
+    composerDateChip.classList.remove('active');
+    composerDateLabel.textContent = 'Дата';
+    composerDateChip.title = 'Привязать к дате';
+  }
+}
+
+composerDateChip.addEventListener('click', () => {
+  if (state.ui.composerDate) {
+    state.ui.composerDate = null;
+    saveState();
+    syncComposerDateChip();
+    return;
+  }
+  composerDateInput.value = todayISO();
+  if (composerDateInput.showPicker) {
+    try { composerDateInput.showPicker(); return; } catch {}
+  }
+  composerDateInput.focus();
+  composerDateInput.click();
+});
+
+composerDateInput.addEventListener('change', () => {
+  state.ui.composerDate = composerDateInput.value || null;
+  saveState();
+  syncComposerDateChip();
+});
+
+function todayISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function formatShortDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
 
 function parseTags(text) {
   const tags = [];
@@ -1158,6 +1375,8 @@ function handleAdd() {
   const raw = composerInput.value.trim();
   if (!raw) return;
 
+  const date = state.ui.composerDate || null;
+
   if (state.ui.activeTab === 'tasks') {
     const { text, tags } = parseTags(raw);
     state.tasks.unshift({
@@ -1167,7 +1386,7 @@ function handleAdd() {
       completed: false,
       priority: state.ui.composerPriority,
       tags,
-      dueDate: null,
+      dueDate: date,
       createdAt: now(),
       completedAt: null
     });
@@ -1178,6 +1397,7 @@ function handleAdd() {
       title: text,
       content: '',
       tags,
+      date,
       createdAt: now()
     });
   } else {
@@ -1185,6 +1405,7 @@ function handleAdd() {
       id: uid(),
       title: raw,
       content: '',
+      date,
       createdAt: now(),
       updatedAt: now()
     });
@@ -1218,6 +1439,11 @@ function render() {
   $('#cntTasks').textContent = state.tasks.length;
   $('#cntIdeas').textContent = state.ideas.length;
   $('#cntNotes').textContent = state.notes.length;
+
+  if (state.ui.activeTab === 'calendar') {
+    renderCalendar();
+    return;
+  }
 
   // Items
   const q = (searchInput.value || '').toLowerCase().trim();
@@ -1268,6 +1494,7 @@ function render() {
           <div class="item-meta">
             <span class="item-priority ${item.priority === 'high' ? 'high' : item.priority === 'medium' ? 'med' : 'low'}">${item.priority === 'high' ? 'высокий' : item.priority === 'medium' ? 'средний' : 'низкий'}</span>
             ${(item.tags || []).map(t => `<span class="item-tag">#${escapeHtml(t)}</span>`).join('')}
+            ${item.dueDate ? renderDueBadge(item.dueDate, item.completed) : ''}
             <span>${formatDate(item.completedAt || item.createdAt)}</span>
           </div>
         </div>
@@ -1287,6 +1514,7 @@ function render() {
           ${item.content ? `<div class="item-desc">${escapeHtml(item.content)}</div>` : ''}
           <div class="item-meta">
             ${(item.tags || []).map(t => `<span class="item-tag">#${escapeHtml(t)}</span>`).join('')}
+            ${item.date ? renderDueBadge(item.date, false) : ''}
             <span>${formatDate(item.createdAt)}</span>
           </div>
         </div>
@@ -1308,6 +1536,7 @@ function render() {
           <div class="item-title">${escapeHtml(item.title)}</div>
           ${item.content ? `<div class="item-desc">${escapeHtml(item.content.slice(0, 200))}${item.content.length > 200 ? '…' : ''}</div>` : ''}
           <div class="item-meta">
+            ${item.date ? renderDueBadge(item.date, false) : ''}
             <span>обн. ${formatDate(item.updatedAt)}</span>
           </div>
         </div>
@@ -1342,6 +1571,190 @@ function formatDate(iso) {
   }
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 }
+
+// Strict YYYY-MM-DD parsing into local date (no UTC drift)
+function parseDateOnly(iso) {
+  if (!iso) return null;
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3]);
+}
+
+function ymd(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function renderDueBadge(iso, completed) {
+  const d = parseDateOnly(iso);
+  if (!d) return '';
+  const today = parseDateOnly(todayISO());
+  let cls = 'item-due';
+  let prefix = '';
+  if (!completed) {
+    if (+d < +today) { cls += ' overdue'; prefix = 'просрочено · '; }
+    else if (+d === +today) { cls += ' today'; prefix = 'сегодня · '; }
+  }
+  const label = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  return `<span class="${cls}">🗓 ${prefix}${label}</span>`;
+}
+
+// ============================================================
+//   CALENDAR
+// ============================================================
+const RU_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+function getMonthAnchor() {
+  if (state.ui.calendarMonth) {
+    const d = parseDateOnly(state.ui.calendarMonth + '-01');
+    if (d) return d;
+  }
+  const t = new Date();
+  return new Date(t.getFullYear(), t.getMonth(), 1);
+}
+
+function setMonthAnchor(d) {
+  state.ui.calendarMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function itemsByDate() {
+  const map = {};
+  const push = (key, kind, item) => {
+    if (!key) return;
+    (map[key] = map[key] || []).push({ kind, item });
+  };
+  state.tasks.forEach(t => push(t.dueDate, 'task', t));
+  state.ideas.forEach(i => push(i.date, 'idea', i));
+  state.notes.forEach(n => push(n.date, 'note', n));
+  return map;
+}
+
+function renderCalendar() {
+  const anchor = getMonthAnchor();
+  const year = anchor.getFullYear();
+  const month = anchor.getMonth();
+  const todayKey = todayISO();
+
+  $('#calMonth').innerHTML = `${RU_MONTHS[month]} <em>${year}</em>`;
+
+  // Week starts Monday: getDay() Sun=0, Mon=1 ... Sat=6 -> shift to Mon=0
+  const firstOfMonth = new Date(year, month, 1);
+  const lead = (firstOfMonth.getDay() + 6) % 7;
+  const start = new Date(year, month, 1 - lead);
+
+  const byDate = itemsByDate();
+
+  const grid = $('#calGrid');
+  grid.innerHTML = '';
+  const cells = 42;
+  for (let i = 0; i < cells; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const key = ymd(d);
+    const otherMonth = d.getMonth() !== month;
+    const isToday = key === todayKey;
+    const selected = key === state.ui.calendarSelected;
+    const items = byDate[key] || [];
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (otherMonth ? ' other-month' : '') + (isToday ? ' today' : '') + (selected ? ' selected' : '');
+    cell.dataset.date = key;
+    const dotsHtml = items.length ? `<div class="cal-dots">${
+      items.slice(0, 3).map(x => `<span class="cal-dot ${x.kind === 'idea' ? 'idea' : x.kind === 'note' ? 'note' : ''}"></span>`).join('')
+    }</div>` : '<div class="cal-dots"></div>';
+    cell.innerHTML = `<span>${d.getDate()}</span>${dotsHtml}`;
+    grid.appendChild(cell);
+  }
+
+  renderCalDayList(byDate);
+}
+
+function renderCalDayList(byDateMap) {
+  const list = $('#calDayList');
+  const sel = state.ui.calendarSelected;
+  if (!sel) {
+    list.innerHTML = `<div class="cal-day-list-empty">выбери день, чтобы увидеть записи</div>`;
+    return;
+  }
+  const items = (byDateMap || itemsByDate())[sel] || [];
+  const d = parseDateOnly(sel);
+  const header = d ? d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : sel;
+  if (items.length === 0) {
+    list.innerHTML = `<div class="cal-day-header">${header}</div><div class="cal-day-list-empty">в этот день ничего нет</div>`;
+    return;
+  }
+  // Order: tasks → ideas → notes; tasks active before done
+  const sorted = items.slice().sort((a, b) => {
+    const order = { task: 0, idea: 1, note: 2 };
+    if (order[a.kind] !== order[b.kind]) return order[a.kind] - order[b.kind];
+    if (a.kind === 'task') return (a.item.completed ? 1 : 0) - (b.item.completed ? 1 : 0);
+    return 0;
+  });
+  list.innerHTML = `<div class="cal-day-header">${header}</div>` + sorted.map(({ kind, item }) => {
+    const kindLabel = kind === 'task' ? 'задача' : kind === 'idea' ? 'идея' : 'заметка';
+    const done = kind === 'task' && item.completed;
+    return `
+      <div class="item${done ? ' done' : ''}">
+        ${kind === 'task' ? `
+          <div class="item-check ${done ? 'done' : ''}" data-id="${item.id}" data-action="cal-toggle">
+            ${done ? '<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+          </div>` : ''}
+        <div class="item-body">
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ''}
+          ${item.content ? `<div class="item-desc">${escapeHtml(String(item.content).slice(0, 200))}${item.content.length > 200 ? '…' : ''}</div>` : ''}
+          <div class="item-meta">
+            <span class="item-tag">${kindLabel}</span>
+            ${kind === 'task' ? `<span class="item-priority ${item.priority === 'high' ? 'high' : item.priority === 'medium' ? 'med' : 'low'}">${item.priority === 'high' ? 'высокий' : item.priority === 'medium' ? 'средний' : 'низкий'}</span>` : ''}
+            ${(item.tags || []).map(t => `<span class="item-tag">#${escapeHtml(t)}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Calendar interactions
+$('#calPrev').onclick = () => {
+  const a = getMonthAnchor();
+  a.setMonth(a.getMonth() - 1);
+  setMonthAnchor(a);
+  saveState();
+  render();
+};
+$('#calNext').onclick = () => {
+  const a = getMonthAnchor();
+  a.setMonth(a.getMonth() + 1);
+  setMonthAnchor(a);
+  saveState();
+  render();
+};
+$('#calToday').onclick = () => {
+  const t = new Date();
+  setMonthAnchor(new Date(t.getFullYear(), t.getMonth(), 1));
+  state.ui.calendarSelected = todayISO();
+  saveState();
+  render();
+};
+$('#calGrid').addEventListener('click', (e) => {
+  const cell = e.target.closest('.cal-cell');
+  if (!cell) return;
+  state.ui.calendarSelected = state.ui.calendarSelected === cell.dataset.date ? null : cell.dataset.date;
+  saveState();
+  render();
+});
+$('#calDayList').addEventListener('click', (e) => {
+  const target = e.target.closest('[data-action="cal-toggle"]');
+  if (!target) return;
+  const t = state.tasks.find(x => x.id === target.dataset.id);
+  if (!t) return;
+  t.completed = !t.completed;
+  t.completedAt = t.completed ? now() : null;
+  saveState();
+  render();
+});
 
 // ============================================================
 //   ITEM ACTIONS
@@ -1408,6 +1821,14 @@ function editItem(id) {
   const descKey = tab === 'tasks' ? 'description' : tab === 'ideas' ? 'content' : 'content';
   const desc = prompt('Описание (можно пусто):', item[descKey] || '');
   if (desc !== null) item[descKey] = desc;
+
+  const dateKey = tab === 'tasks' ? 'dueDate' : 'date';
+  const currentDate = item[dateKey] ? String(item[dateKey]).slice(0, 10) : '';
+  const newDate = prompt(tab === 'tasks' ? 'Дедлайн (YYYY-MM-DD, пусто = убрать):' : 'Дата (YYYY-MM-DD, пусто = убрать):', currentDate);
+  if (newDate !== null) {
+    const trimmed = newDate.trim();
+    item[dateKey] = trimmed && /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : (trimmed === '' ? null : item[dateKey]);
+  }
 
   if (tab === 'notes') item.updatedAt = now();
   saveState();
@@ -1614,13 +2035,16 @@ async function handleAISend() {
 const TOOLS = [
   {
     name: 'list_items',
-    description: 'Показать текущее состояние трекера: задачи, идеи или заметки. Используй это перед удалением/изменением, чтобы найти нужный элемент по названию и получить его id.',
+    description: 'Показать текущее состояние трекера: задачи, идеи или заметки. Используй это перед удалением/изменением, чтобы найти нужный элемент по названию и получить его id. Можно фильтровать по дате (для задач — по dueDate, для идей/заметок — по полю date).',
     input_schema: {
       type: 'object',
       properties: {
         kind: { type: 'string', enum: ['tasks', 'ideas', 'notes', 'all'], description: 'Что показать' },
         filter: { type: 'string', enum: ['active', 'done', 'all'], description: 'Только для задач: фильтр по статусу' },
-        search: { type: 'string', description: 'Опциональный поиск по подстроке в заголовке/описании/тегах' }
+        search: { type: 'string', description: 'Опциональный поиск по подстроке в заголовке/описании/тегах' },
+        date: { type: 'string', description: 'Фильтр по конкретной дате YYYY-MM-DD' },
+        date_from: { type: 'string', description: 'Начало диапазона дат YYYY-MM-DD (включительно)' },
+        date_to: { type: 'string', description: 'Конец диапазона дат YYYY-MM-DD (включительно)' }
       },
       required: ['kind']
     }
@@ -1686,9 +2110,25 @@ const TOOLS = [
       properties: {
         title: { type: 'string' },
         content: { type: 'string' },
-        tags: { type: 'array', items: { type: 'string' } }
+        tags: { type: 'array', items: { type: 'string' } },
+        date: { type: 'string', description: 'Опциональная дата привязки YYYY-MM-DD' }
       },
       required: ['title']
+    }
+  },
+  {
+    name: 'update_idea',
+    description: 'Изменить идею.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+        content: { type: 'string' },
+        tags: { type: 'array', items: { type: 'string' } },
+        date: { type: 'string', description: 'YYYY-MM-DD или пустая строка чтобы убрать' }
+      },
+      required: ['id']
     }
   },
   {
@@ -1714,12 +2154,13 @@ const TOOLS = [
   },
   {
     name: 'create_note',
-    description: 'Создать заметку (длинный текст).',
+    description: 'Создать заметку (длинный текст). Можно привязать к конкретной дате — удобно для дневниковых записей.',
     input_schema: {
       type: 'object',
       properties: {
         title: { type: 'string' },
-        content: { type: 'string' }
+        content: { type: 'string' },
+        date: { type: 'string', description: 'Опциональная дата YYYY-MM-DD' }
       },
       required: ['title']
     }
@@ -1732,7 +2173,8 @@ const TOOLS = [
       properties: {
         id: { type: 'string' },
         title: { type: 'string' },
-        content: { type: 'string' }
+        content: { type: 'string' },
+        date: { type: 'string', description: 'YYYY-MM-DD или пустая строка чтобы убрать' }
       },
       required: ['id']
     }
@@ -1755,6 +2197,7 @@ const TOOL_LABELS = {
   complete_task: 'отмечаю задачу',
   delete_task: 'удаляю задачу',
   create_idea: 'сохраняю идею',
+  update_idea: 'обновляю идею',
   delete_idea: 'удаляю идею',
   convert_idea_to_task: 'превращаю идею в задачу',
   create_note: 'создаю заметку',
@@ -1768,12 +2211,25 @@ function executeTool(name, input) {
       const kind = input.kind || 'all';
       const search = (input.search || '').toLowerCase();
       const filter = input.filter || 'all';
-      const filterFn = (it) => !search || [it.title, it.description, it.content, ...(it.tags || [])]
+      const exactDate = input.date || null;
+      const dateFrom = input.date_from || null;
+      const dateTo = input.date_to || null;
+
+      const matchSearch = (it) => !search || [it.title, it.description, it.content, ...(it.tags || [])]
         .filter(Boolean).join(' ').toLowerCase().includes(search);
+      const matchDate = (key) => {
+        if (!exactDate && !dateFrom && !dateTo) return true;
+        if (!key) return false;
+        const k = String(key).slice(0, 10);
+        if (exactDate && k !== exactDate) return false;
+        if (dateFrom && k < dateFrom) return false;
+        if (dateTo && k > dateTo) return false;
+        return true;
+      };
 
       const result = {};
       if (kind === 'tasks' || kind === 'all') {
-        let t = state.tasks.filter(filterFn);
+        let t = state.tasks.filter(matchSearch).filter(x => matchDate(x.dueDate));
         if (filter === 'active') t = t.filter(x => !x.completed);
         else if (filter === 'done') t = t.filter(x => x.completed);
         result.tasks = t.map(x => ({
@@ -1783,13 +2239,13 @@ function executeTool(name, input) {
         }));
       }
       if (kind === 'ideas' || kind === 'all') {
-        result.ideas = state.ideas.filter(filterFn).map(x => ({
-          id: x.id, title: x.title, content: x.content, tags: x.tags, created_at: x.createdAt
+        result.ideas = state.ideas.filter(matchSearch).filter(x => matchDate(x.date)).map(x => ({
+          id: x.id, title: x.title, content: x.content, tags: x.tags, date: x.date || null, created_at: x.createdAt
         }));
       }
       if (kind === 'notes' || kind === 'all') {
-        result.notes = state.notes.filter(filterFn).map(x => ({
-          id: x.id, title: x.title, content: x.content, created_at: x.createdAt, updated_at: x.updatedAt
+        result.notes = state.notes.filter(matchSearch).filter(x => matchDate(x.date)).map(x => ({
+          id: x.id, title: x.title, content: x.content, date: x.date || null, created_at: x.createdAt, updated_at: x.updatedAt
         }));
       }
       return result;
@@ -1855,12 +2311,25 @@ function executeTool(name, input) {
         title: input.title,
         content: input.content || '',
         tags: input.tags || [],
+        date: input.date || null,
         createdAt: now()
       };
       state.ideas.unshift(i);
       saveState();
       render();
       return { ok: true, id: i.id, title: i.title };
+    }
+
+    case 'update_idea': {
+      const i = state.ideas.find(x => x.id === input.id);
+      if (!i) return { ok: false, error: 'Идея не найдена' };
+      if (input.title !== undefined) i.title = input.title;
+      if (input.content !== undefined) i.content = input.content;
+      if (input.tags !== undefined) i.tags = input.tags;
+      if (input.date !== undefined) i.date = input.date || null;
+      saveState();
+      render();
+      return { ok: true, id: i.id };
     }
 
     case 'delete_idea': {
@@ -1897,6 +2366,7 @@ function executeTool(name, input) {
         id: uid(),
         title: input.title,
         content: input.content || '',
+        date: input.date || null,
         createdAt: now(),
         updatedAt: now()
       };
@@ -1911,6 +2381,7 @@ function executeTool(name, input) {
       if (!n) return { ok: false, error: 'Заметка не найдена' };
       if (input.title !== undefined) n.title = input.title;
       if (input.content !== undefined) n.content = input.content;
+      if (input.date !== undefined) n.date = input.date || null;
       n.updatedAt = now();
       saveState();
       render();
@@ -1933,10 +2404,15 @@ function executeTool(name, input) {
 const SYSTEM_PROMPT = `Ты — встроенный агент в личный трекер задач/идей/заметок Александра. Общаешься на русском, кратко и по делу.
 
 Твои возможности — управлять трекером через инструменты:
-- list_items — посмотреть, что есть (используй ВСЕГДА перед изменением, чтобы найти id по названию)
+- list_items — посмотреть, что есть (используй ВСЕГДА перед изменением, чтобы найти id по названию). Поддерживает фильтры по дате: date / date_from / date_to (формат YYYY-MM-DD).
 - create_task / update_task / complete_task / delete_task
-- create_idea / delete_idea / convert_idea_to_task
+- create_idea / update_idea / delete_idea / convert_idea_to_task
 - create_note / update_note / delete_note
+
+Даты:
+- Задачи: поле due_date (дедлайн) в формате YYYY-MM-DD.
+- Идеи и заметки: поле date — для привязки к календарной дате (дневник, события). Опционально.
+- Когда пользователь говорит «завтра», «в пятницу», «через неделю» — преобразуй в YYYY-MM-DD относительно сегодняшней даты ниже.
 
 Правила:
 1. Когда пользователь просит изменить/удалить/отметить что-то по названию — сначала вызови list_items с поиском, чтобы найти точный id, потом действуй.
@@ -1944,8 +2420,8 @@ const SYSTEM_PROMPT = `Ты — встроенный агент в личный 
 3. После выполнения действий кратко подтверди результат на русском (1-2 предложения), не дублируй детали инструмента.
 4. Если запрос неоднозначный — уточни до выполнения.
 5. Не показывай id пользователю в ответах — он работает с заголовками.
-6. Дату в формате ISO для дедлайнов.
-7. Сегодня: ${new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`;
+6. Дату в формате YYYY-MM-DD.
+7. Сегодня: ${new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} (ISO: ${todayISO()}).`;
 
 async function runAgentLoop(userText) {
   // Build messages from chat history (last 20 turns max)
@@ -2064,8 +2540,21 @@ function setupVoice(btn, target) {
   let baseValue = '';
   let active = false;
 
-  btn.onclick = () => {
+  btn.onclick = async () => {
     if (active && rec) { rec.stop(); return; }
+
+    // iOS PWA standalone: явно запрашиваем разрешение на микрофон.
+    // Без этого SpeechRecognition отдаёт not-allowed без диалога.
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+      } catch (err) {
+        toast('Микрофон запрещён в настройках');
+        return;
+      }
+    }
+
     try {
       rec = new SR();
     } catch (err) {
@@ -2140,9 +2629,10 @@ if ('serviceWorker' in navigator) {
 //   INIT
 // ============================================================
 syncTabUI();
-$$('#composerOptions .chip').forEach((c) =>
+$$('#composerOptions .chip[data-priority]').forEach((c) =>
   c.classList.toggle('active', c.dataset.priority === state.ui.composerPriority)
 );
+syncComposerDateChip();
 render();
 updateAIStatus();
 
