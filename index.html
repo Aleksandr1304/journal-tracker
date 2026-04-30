@@ -687,6 +687,37 @@ button { cursor: pointer; }
   30% { opacity: 1; transform: translateY(-3px); }
 }
 
+/* ===== Mic button (voice input) ===== */
+.mic-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  background: var(--paper);
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+.mic-btn:hover { color: var(--ink); border-color: var(--ink-soft); }
+.mic-btn svg { width: 16px; height: 16px; }
+.mic-btn.recording {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+  animation: micPulse 1.4s ease-in-out infinite;
+}
+.mic-btn[hidden] { display: none; }
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139,30,30,0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(139,30,30,0); }
+}
+[data-theme="dark"] @keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,88,77,0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(212,88,77,0); }
+}
+
 /* ===== Settings modal ===== */
 .modal-bg {
   position: fixed;
@@ -885,6 +916,9 @@ button { cursor: pointer; }
       <button class="chip high" data-priority="high">Высокий</button>
       <button class="chip med active" data-priority="medium">Средний</button>
       <button class="chip low" data-priority="low">Низкий</button>
+      <button class="mic-btn" id="composerMic" type="button" title="Голосовой ввод" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
       <button class="composer-submit" id="composerSubmit">Добавить</button>
     </div>
   </div>
@@ -926,6 +960,9 @@ button { cursor: pointer; }
   <div class="ai-messages" id="aiMessages"></div>
   <div class="ai-input-row">
     <textarea class="ai-input" id="aiInput" placeholder="Скажи Claude, что сделать…" rows="1"></textarea>
+    <button class="mic-btn" id="aiMic" type="button" title="Голосовой ввод" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
     <button class="ai-send" id="aiSend">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
     </button>
@@ -2014,6 +2051,80 @@ function toast(msg) {
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ============================================================
+//   VOICE INPUT (Web Speech API)
+// ============================================================
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function setupVoice(btn, target) {
+  if (!btn || !target) return;
+  let rec = null;
+  let baseValue = '';
+  let active = false;
+
+  btn.onclick = () => {
+    if (active && rec) { rec.stop(); return; }
+    try {
+      rec = new SR();
+    } catch (err) {
+      toast('Голосовой ввод недоступен');
+      return;
+    }
+    rec.lang = 'ru-RU';
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
+    baseValue = target.value;
+
+    rec.onstart = () => {
+      active = true;
+      btn.classList.add('recording');
+    };
+    rec.onresult = (e) => {
+      let interim = '';
+      let final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t; else interim += t;
+      }
+      const sep = baseValue && !/\s$/.test(baseValue) ? ' ' : '';
+      target.value = baseValue + sep + final + interim;
+      if (final) baseValue = target.value;
+      target.dispatchEvent(new Event('input'));
+    };
+    rec.onerror = (e) => {
+      const code = e.error || 'unknown';
+      if (code === 'not-allowed' || code === 'service-not-allowed') {
+        toast('Микрофон запрещён');
+      } else if (code === 'no-speech') {
+        toast('Тишина');
+      } else if (code !== 'aborted') {
+        toast('Ошибка: ' + code);
+      }
+    };
+    rec.onend = () => {
+      active = false;
+      btn.classList.remove('recording');
+      target.focus();
+    };
+
+    try { rec.start(); }
+    catch (err) {
+      active = false;
+      btn.classList.remove('recording');
+      toast('Не удалось начать запись');
+    }
+  };
+}
+
+if (SR) {
+  $('#composerMic').hidden = false;
+  $('#aiMic').hidden = false;
+  setupVoice($('#composerMic'), composerInput);
+  setupVoice($('#aiMic'), aiInput);
 }
 
 // ============================================================
