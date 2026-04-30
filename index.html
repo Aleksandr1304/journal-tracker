@@ -502,41 +502,31 @@ button { cursor: pointer; }
 }
 
 /* ===== Date chip (composer) ===== */
-.date-chip-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
 .chip.date-chip {
   display: inline-flex;
   align-items: center;
-  pointer-events: none;
 }
 .chip.date-chip.active {
   background: var(--accent-2);
   color: var(--paper);
   border-color: var(--accent-2);
 }
-.date-overlay-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  border: none;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  -webkit-appearance: none;
-  appearance: none;
-  font-size: 16px;
-  z-index: 2;
-}
 .chip.date-clear-chip {
   padding: 5px 8px;
   font-size: 12px;
   letter-spacing: 0;
+}
+.visually-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
 }
 
 /* ===== Item due-date badge ===== */
@@ -1086,12 +1076,10 @@ button { cursor: pointer; }
       <button class="chip high" data-priority="high">Высокий</button>
       <button class="chip med active" data-priority="medium">Средний</button>
       <button class="chip low" data-priority="low">Низкий</button>
-      <span class="date-chip-wrap" id="composerDateWrap">
-        <span class="chip date-chip" id="composerDate">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="composerDateLabel">Дата</span>
-        </span>
-        <input type="date" id="composerDateInput" class="date-overlay-input" aria-label="Привязать к дате" />
-      </span>
+      <button class="chip date-chip" id="composerDate" type="button" title="Привязать к дате">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="composerDateLabel">Дата</span>
+      </button>
+      <input type="date" id="composerDateInput" class="visually-hidden-input" aria-label="Дата" tabindex="-1" />
       <button class="chip date-clear-chip" id="composerDateClear" type="button" title="Убрать дату" hidden>✕</button>
       <button class="mic-btn" id="composerMic" type="button" title="Голосовой ввод" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
@@ -1340,7 +1328,7 @@ composerInput.addEventListener('keydown', (e) => {
 });
 composerSubmit.onclick = handleAdd;
 
-// Date chip: native date input overlaid on a styled chip + separate clear button
+// Date chip: button triggers native picker via showPicker(), with prompt fallback
 const composerDateChip = $('#composerDate');
 const composerDateInput = $('#composerDateInput');
 const composerDateLabel = $('#composerDateLabel');
@@ -1359,6 +1347,30 @@ function syncComposerDateChip() {
     composerDateClear.hidden = true;
   }
 }
+
+composerDateChip.addEventListener('click', () => {
+  composerDateInput.value = state.ui.composerDate || todayISO();
+  // showPicker() — самый надёжный путь открыть нативный date picker
+  // для скрытого инпута. Поддержано Chrome 99+, Safari 16.4+, FF 101+.
+  if (typeof composerDateInput.showPicker === 'function') {
+    try { composerDateInput.showPicker(); return; } catch (e) { console.warn('showPicker:', e); }
+  }
+  // Fallback: prompt с YYYY-MM-DD
+  const current = state.ui.composerDate || todayISO();
+  const entered = prompt('Дата (YYYY-MM-DD):', current);
+  if (entered === null) return;
+  const trimmed = entered.trim();
+  if (!trimmed) {
+    state.ui.composerDate = null;
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !isNaN(Date.parse(trimmed))) {
+    state.ui.composerDate = trimmed;
+  } else {
+    toast('Формат: YYYY-MM-DD');
+    return;
+  }
+  saveState();
+  syncComposerDateChip();
+});
 
 composerDateInput.addEventListener('change', () => {
   state.ui.composerDate = composerDateInput.value || null;
