@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a1815" />
+<title>Журнал · Личный трекер</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Журнал" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+:root {
+  /* Бумажная (светлая) тема — по умолчанию */
+  --bg: #f3ede0;
+  --bg-soft: #ebe2d0;
+  --paper: #faf5e9;
+  --ink: #1a1815;
+  --ink-soft: #4a4338;
+  --ink-muted: #786d5d;
+  --line: #d6c9ad;
+  --line-soft: #e3d8be;
+  --accent: #8b1e1e;       /* бордовый */
+  --accent-2: #b8842a;     /* охра */
+  --done: #5a6e3a;         /* оливковый */
+  --high: #8b1e1e;
+  --med: #b8842a;
+  --low: #6b7a4a;
+  --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 12px 40px -16px rgba(60,40,20,0.18);
+  --serif: 'Instrument Serif', 'Times New Roman', serif;
+  --sans: 'Inter Tight', -apple-system, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+[data-theme="dark"] {
+  --bg: #14120f;
+  --bg-soft: #1c1916;
+  --paper: #1f1c18;
+  --ink: #ede5d2;
+  --ink-soft: #c2b89f;
+  --ink-muted: #8b8270;
+  --line: #2f2a23;
+  --line-soft: #25211c;
+  --accent: #d4584d;
+  --accent-2: #d9a04a;
+  --done: #8aa05c;
+  --high: #d4584d;
+  --med: #d9a04a;
+  --low: #8aa05c;
+  --shadow: 0 1px 0 rgba(255,255,255,0.02), 0 18px 50px -20px rgba(0,0,0,0.6);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(184,132,42,0.06), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(139,30,30,0.05), transparent 40%);
+  background-attachment: fixed;
+}
+
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(217,160,74,0.04), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(212,88,77,0.04), transparent 40%);
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+button { cursor: pointer; }
+
+::selection { background: var(--accent); color: var(--paper); }
+
+/* ===== Layout ===== */
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 32px 120px;
+  position: relative;
+}
+
+@media (max-width: 720px) {
+  .app { padding: 16px 18px 140px; }
+}
+
+/* ===== Header ===== */
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 16px 0 28px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+}
+
+.brand h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.brand .subtitle {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-top: 6px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  transition: all 0.18s ease;
+}
+.icon-btn:hover { color: var(--ink); border-color: var(--ink-soft); transform: translateY(-1px); }
+.icon-btn svg { width: 17px; height: 17px; }
+
+/* ===== Stats ===== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 28px;
+}
+
+@media (max-width: 720px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+.stat {
+  background: var(--paper);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-family: var(--serif);
+  font-size: 38px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.stat-value.accent { color: var(--accent); }
+
+.stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ===== Tabs ===== */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  padding: 12px 20px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  position: relative;
+}
+.tab:hover { color: var(--ink-soft); }
+.tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.tab .count {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+/* ===== Composer ===== */
+.composer {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+.composer-input {
+  width: 100%;
+  padding: 16px 18px;
+  font-size: 16px;
+  background: transparent;
+  font-family: var(--sans);
+}
+
+.composer-input::placeholder { color: var(--ink-muted); }
+
+.composer-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line-soft);
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 5px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  color: var(--ink-muted);
+  background: transparent;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+.chip:hover { color: var(--ink); border-color: var(--ink-soft); }
+.chip.active {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.chip.high.active { background: var(--high); border-color: var(--high); }
+.chip.med.active { background: var(--med); border-color: var(--med); }
+.chip.low.active { background: var(--low); border-color: var(--low); }
+
+.composer-submit {
+  margin-left: auto;
+  padding: 8px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+.composer-submit:hover { background: var(--accent); }
+
+/* ===== Search ===== */
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: 12px;
+}
+
+.search-input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 6px 0;
+}
+.search-input::placeholder { color: var(--ink-muted); }
+
+.filter-select {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 4px 8px;
+  border-bottom: 1px dashed var(--line);
+  cursor: pointer;
+}
+
+/* ===== Items ===== */
+.items {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line-soft);
+  align-items: flex-start;
+  position: relative;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.item-check {
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+.item-check:hover { border-color: var(--accent); }
+.item-check.done {
+  background: var(--done);
+  border-color: var(--done);
+}
+.item-check.done svg {
+  width: 12px;
+  height: 12px;
+  stroke: var(--paper);
+  stroke-width: 3;
+}
+
+.item-body { flex: 1; min-width: 0; }
+
+.item-title {
+  font-size: 15.5px;
+  line-height: 1.4;
+  color: var(--ink);
+  word-wrap: break-word;
+}
+
+.item.done .item-title {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-muted);
+  text-decoration-thickness: 1px;
+}
+
+.item-desc {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  flex-wrap: wrap;
+}
+
+.item-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+}
+.item-priority::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+}
+.item-priority.high { color: var(--high); }
+.item-priority.high::before { background: var(--high); }
+.item-priority.med { color: var(--med); }
+.item-priority.med::before { background: var(--med); }
+.item-priority.low { color: var(--low); }
+.item-priority.low::before { background: var(--low); }
+
+.item-tag {
+  color: var(--accent-2);
+  text-transform: lowercase;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.item-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+.item:hover .item-actions { opacity: 1; }
+
+@media (max-width: 720px) {
+  .item-actions { opacity: 1; }
+}
+
+.item-action {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-muted);
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+.item-action:hover { color: var(--accent); background: var(--bg-soft); }
+.item-action svg { width: 14px; height: 14px; }
+
+/* ===== Empty state ===== */
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--ink-muted);
+  font-family: var(--serif);
+  font-size: 22px;
+  font-style: italic;
+}
+.empty .empty-hint {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* ===== Notes (textarea) ===== */
+.note-editor textarea {
+  width: 100%;
+  min-height: 120px;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  resize: vertical;
+  padding: 14px 18px;
+  background: transparent;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* ===== AI Panel ===== */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 30px -8px rgba(0,0,0,0.4);
+  z-index: 100;
+  transition: all 0.2s ease;
+}
+.fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  background: var(--accent);
+}
+.fab svg { width: 22px; height: 22px; }
+
+.ai-panel {
+  position: fixed;
+  inset: auto 0 0 0;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  height: min(620px, 88vh);
+  z-index: 200;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -20px 60px -20px rgba(0,0,0,0.3);
+}
+
+@media (min-width: 880px) {
+  .ai-panel {
+    inset: auto 24px 24px auto;
+    width: 440px;
+    border: 1px solid var(--line);
+    border-radius: 0;
+  }
+}
+
+.ai-panel.open { transform: translateY(0); }
+
+.ai-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-title-text {
+  font-family: var(--serif);
+  font-size: 22px;
+}
+.ai-title-text em { color: var(--accent); font-style: italic; }
+
+.ai-status {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ai-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+}
+.ai-status.connected::before { background: var(--done); }
+.ai-status.error::before { background: var(--accent); }
+
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-msg {
+  max-width: 88%;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid var(--line);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.ai-msg.user {
+  align-self: flex-end;
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.ai-msg.assistant {
+  align-self: flex-start;
+  background: var(--bg-soft);
+}
+.ai-msg.tool {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 11px;
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--ink-muted);
+  padding: 6px 10px;
+}
+.ai-msg.error {
+  align-self: stretch;
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+  font-size: 12.5px;
+}
+
+.ai-input-row {
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--paper);
+}
+
+.ai-input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 8px 10px;
+  resize: none;
+  max-height: 120px;
+  min-height: 38px;
+  line-height: 1.4;
+}
+
+.ai-send {
+  width: 38px;
+  height: 38px;
+  background: var(--ink);
+  color: var(--paper);
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease;
+}
+.ai-send:hover:not(:disabled) { background: var(--accent); }
+.ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
+.ai-send svg { width: 16px; height: 16px; }
+
+.ai-typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 12px 14px;
+  align-self: flex-start;
+}
+.ai-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  animation: typing 1.4s infinite;
+}
+.ai-typing span:nth-child(2) { animation-delay: 0.15s; }
+.ai-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* ===== Settings modal ===== */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,15,8,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-bg.open { display: flex; }
+
+.modal {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  max-width: 460px;
+  width: 100%;
+  padding: 28px 30px;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.modal h2 {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+.modal h2 em { color: var(--accent); font-style: italic; }
+
+.modal-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 24px;
+}
+
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--ink-soft);
+}
+.field .hint {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.field .hint a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 9px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  transition: all 0.15s ease;
+}
+.btn:hover { border-color: var(--ink-soft); }
+.btn.primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+.btn.danger { color: var(--accent); }
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-muted);
+}
+.modal-close:hover { color: var(--ink); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  z-index: 400;
+  opacity: 0;
+  transition: all 0.25s ease;
+  pointer-events: none;
+  box-shadow: 0 10px 30px -8px rgba(0,0,0,0.3);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Scrollbar */
+.ai-messages::-webkit-scrollbar { width: 4px; }
+.ai-messages::-webkit-scrollbar-thumb { background: var(--line); }
+
+</style>
+</head>
+<body data-theme="light">
+
+<div class="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <h1>Журнал <em>дел</em></h1>
+      <div class="subtitle">Личный трекер · v1.0</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeToggle" title="Сменить тему">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+      </button>
+      <button class="icon-btn" id="exportBtn" title="Экспорт">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </button>
+      <button class="icon-btn" id="importBtn" title="Импорт">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+      <button class="icon-btn" id="settingsBtn" title="Настройки">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="statActive">0</div>
+      <div class="stat-label">Активных задач</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value accent" id="statDone">0</div>
+      <div class="stat-label">Выполнено</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statIdeas">0</div>
+      <div class="stat-label">Идей</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statNotes">0</div>
+      <div class="stat-label">Заметок</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="tasks">Задачи <span class="count" id="cntTasks">0</span></button>
+    <button class="tab" data-tab="ideas">Идеи <span class="count" id="cntIdeas">0</span></button>
+    <button class="tab" data-tab="notes">Заметки <span class="count" id="cntNotes">0</span></button>
+  </nav>
+
+  <!-- COMPOSER -->
+  <div class="composer" id="composer">
+    <input class="composer-input" id="composerInput" placeholder="Записать задачу…" />
+    <div class="composer-options" id="composerOptions">
+      <button class="chip high" data-priority="high">Высокий</button>
+      <button class="chip med active" data-priority="medium">Средний</button>
+      <button class="chip low" data-priority="low">Низкий</button>
+      <button class="composer-submit" id="composerSubmit">Добавить</button>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-row">
+    <input class="search-input" id="searchInput" placeholder="Поиск…" />
+    <select class="filter-select" id="filterSelect">
+      <option value="all">Все</option>
+      <option value="active">Только активные</option>
+      <option value="done">Только выполненные</option>
+    </select>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="items" id="items"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" title="Открыть Claude-агента">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+</button>
+
+<!-- AI PANEL -->
+<aside class="ai-panel" id="aiPanel">
+  <div class="ai-header">
+    <div class="ai-title">
+      <div class="ai-title-text"><em>Claude</em> · агент</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="ai-status" id="aiStatus">не подключён</span>
+      <button class="icon-btn" id="aiClose" style="width:30px;height:30px;border-radius:0;border:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="ai-messages" id="aiMessages"></div>
+  <div class="ai-input-row">
+    <textarea class="ai-input" id="aiInput" placeholder="Скажи Claude, что сделать…" rows="1"></textarea>
+    <button class="ai-send" id="aiSend">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+</aside>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h2><em>Настройки</em></h2>
+    <div class="modal-sub">Anthropic API · хранение · сброс</div>
+
+    <div class="field">
+      <label for="apiKey">Anthropic API key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" />
+      <div class="hint">Ключ хранится только в этом браузере (localStorage). Получить можно в <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">консоли Anthropic</a>.</div>
+    </div>
+
+    <div class="field">
+      <label for="modelSelect">Модель</label>
+      <select id="modelSelect">
+        <option value="claude-sonnet-4-6">Sonnet 4.6 — баланс</option>
+        <option value="claude-opus-4-7">Opus 4.7 — максимум</option>
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5 — быстро и дёшево</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="btnReset">Сбросить всё</button>
+      <button class="btn primary" id="btnSave">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="application/json" hidden />
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//   STATE & STORAGE
+// ============================================================
+const STORAGE_KEY = 'tracker.state.v1';
+
+const defaultState = {
+  tasks: [],
+  ideas: [],
+  notes: [],
+  settings: {
+    theme: 'light',
+    apiKey: '',
+    model: 'claude-sonnet-4-6'
+  },
+  ui: {
+    activeTab: 'tasks',
+    composerPriority: 'medium'
+  },
+  chat: []
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return structuredClone(defaultState);
+    const parsed = JSON.parse(raw);
+    return {
+      ...structuredClone(defaultState),
+      ...parsed,
+      settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+      ui: { ...defaultState.ui, ...(parsed.ui || {}) }
+    };
+  } catch (e) {
+    console.warn('Не удалось загрузить состояние:', e);
+    return structuredClone(defaultState);
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Не удалось сохранить состояние:', e);
+  }
+}
+
+let state = loadState();
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const now = () => new Date().toISOString();
+
+// ============================================================
+//   DOM REFS
+// ============================================================
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+const itemsEl = $('#items');
+const tabsEl = $('#tabs');
+const composerEl = $('#composer');
+const composerInput = $('#composerInput');
+const composerOptions = $('#composerOptions');
+const composerSubmit = $('#composerSubmit');
+const searchInput = $('#searchInput');
+const filterSelect = $('#filterSelect');
+
+// ============================================================
+//   THEME
+// ============================================================
+function applyTheme() {
+  document.body.setAttribute('data-theme', state.settings.theme);
+  document.querySelector('meta[name="theme-color"]').setAttribute(
+    'content',
+    state.settings.theme === 'dark' ? '#14120f' : '#f3ede0'
+  );
+}
+applyTheme();
+
+$('#themeToggle').onclick = () => {
+  state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  saveState();
+};
+
+// ============================================================
+//   TABS
+// ============================================================
+tabsEl.addEventListener('click', (e) => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  state.ui.activeTab = tab.dataset.tab;
+  saveState();
+  syncTabUI();
+  render();
+});
+
+function syncTabUI() {
+  $$('.tab').forEach((t) =>
+    t.classList.toggle('active', t.dataset.tab === state.ui.activeTab)
+  );
+
+  // Composer adapts to active tab
+  if (state.ui.activeTab === 'tasks') {
+    composerInput.placeholder = 'Записать задачу…';
+    composerOptions.style.display = 'flex';
+  } else if (state.ui.activeTab === 'ideas') {
+    composerInput.placeholder = 'Записать идею…';
+    composerOptions.style.display = 'flex';
+    // Для идей приоритеты не нужны, но оставим кнопку добавить
+  } else {
+    composerInput.placeholder = 'Заголовок заметки…';
+    composerOptions.style.display = 'flex';
+  }
+  // Скрыть приоритеты для не-задач
+  $$('#composerOptions .chip').forEach((c) => {
+    c.style.display = state.ui.activeTab === 'tasks' ? '' : 'none';
+  });
+}
+
+// ============================================================
+//   COMPOSER
+// ============================================================
+composerOptions.addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  state.ui.composerPriority = chip.dataset.priority;
+  $$('#composerOptions .chip').forEach((c) =>
+    c.classList.toggle('active', c.dataset.priority === state.ui.composerPriority)
+  );
+  saveState();
+});
+
+composerInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleAdd();
+  }
+});
+composerSubmit.onclick = handleAdd;
+
+function parseTags(text) {
+  const tags = [];
+  const cleaned = text.replace(/#([\p{L}\p{N}_-]+)/gu, (_, t) => {
+    tags.push(t.toLowerCase());
+    return '';
+  }).trim();
+  return { text: cleaned, tags };
+}
+
+function handleAdd() {
+  const raw = composerInput.value.trim();
+  if (!raw) return;
+
+  if (state.ui.activeTab === 'tasks') {
+    const { text, tags } = parseTags(raw);
+    state.tasks.unshift({
+      id: uid(),
+      title: text,
+      description: '',
+      completed: false,
+      priority: state.ui.composerPriority,
+      tags,
+      dueDate: null,
+      createdAt: now(),
+      completedAt: null
+    });
+  } else if (state.ui.activeTab === 'ideas') {
+    const { text, tags } = parseTags(raw);
+    state.ideas.unshift({
+      id: uid(),
+      title: text,
+      content: '',
+      tags,
+      createdAt: now()
+    });
+  } else {
+    state.notes.unshift({
+      id: uid(),
+      title: raw,
+      content: '',
+      createdAt: now(),
+      updatedAt: now()
+    });
+  }
+
+  composerInput.value = '';
+  saveState();
+  render();
+  toast(state.ui.activeTab === 'tasks' ? 'Задача добавлена' :
+        state.ui.activeTab === 'ideas' ? 'Идея сохранена' : 'Заметка создана');
+}
+
+// ============================================================
+//   SEARCH & FILTER
+// ============================================================
+searchInput.addEventListener('input', render);
+filterSelect.addEventListener('change', render);
+
+// ============================================================
+//   RENDER
+// ============================================================
+function render() {
+  // Stats
+  const activeCount = state.tasks.filter(t => !t.completed).length;
+  const doneCount = state.tasks.filter(t => t.completed).length;
+  $('#statActive').textContent = activeCount;
+  $('#statDone').textContent = doneCount;
+  $('#statIdeas').textContent = state.ideas.length;
+  $('#statNotes').textContent = state.notes.length;
+
+  $('#cntTasks').textContent = state.tasks.length;
+  $('#cntIdeas').textContent = state.ideas.length;
+  $('#cntNotes').textContent = state.notes.length;
+
+  // Items
+  const q = (searchInput.value || '').toLowerCase().trim();
+  const filter = filterSelect.value;
+
+  itemsEl.innerHTML = '';
+
+  let list = [];
+  if (state.ui.activeTab === 'tasks') {
+    list = state.tasks.slice();
+    if (filter === 'active') list = list.filter(t => !t.completed);
+    if (filter === 'done') list = list.filter(t => t.completed);
+    list.sort((a, b) => {
+      if (a.completed !== b.completed) return a.completed - b.completed;
+      const pri = { high: 0, medium: 1, low: 2 };
+      if (pri[a.priority] !== pri[b.priority]) return pri[a.priority] - pri[b.priority];
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+  } else if (state.ui.activeTab === 'ideas') {
+    list = state.ideas.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else {
+    list = state.notes.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  }
+
+  if (q) {
+    list = list.filter(it => {
+      const hay = [it.title, it.description, it.content, ...(it.tags || [])].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  if (list.length === 0) {
+    itemsEl.innerHTML = `<div class="empty">здесь пока тихо…<div class="empty-hint">${state.ui.activeTab === 'tasks' ? 'добавь первую задачу выше' : state.ui.activeTab === 'ideas' ? 'запиши первую идею' : 'создай первую заметку'}</div></div>`;
+    return;
+  }
+
+  list.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'item' + (item.completed ? ' done' : '');
+    if (state.ui.activeTab === 'tasks') {
+      el.innerHTML = `
+        <div class="item-check ${item.completed ? 'done' : ''}" data-id="${item.id}" data-action="toggle">
+          ${item.completed ? '<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+        </div>
+        <div class="item-body">
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ''}
+          <div class="item-meta">
+            <span class="item-priority ${item.priority === 'high' ? 'high' : item.priority === 'medium' ? 'med' : 'low'}">${item.priority === 'high' ? 'высокий' : item.priority === 'medium' ? 'средний' : 'низкий'}</span>
+            ${(item.tags || []).map(t => `<span class="item-tag">#${escapeHtml(t)}</span>`).join('')}
+            <span>${formatDate(item.completedAt || item.createdAt)}</span>
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action" data-id="${item.id}" data-action="edit" title="Редактировать">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="item-action" data-id="${item.id}" data-action="delete" title="Удалить">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          </button>
+        </div>
+      `;
+    } else if (state.ui.activeTab === 'ideas') {
+      el.innerHTML = `
+        <div class="item-body">
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.content ? `<div class="item-desc">${escapeHtml(item.content)}</div>` : ''}
+          <div class="item-meta">
+            ${(item.tags || []).map(t => `<span class="item-tag">#${escapeHtml(t)}</span>`).join('')}
+            <span>${formatDate(item.createdAt)}</span>
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action" data-id="${item.id}" data-action="edit" title="Редактировать">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="item-action" data-id="${item.id}" data-action="convert" title="Преобразовать в задачу">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </button>
+          <button class="item-action" data-id="${item.id}" data-action="delete" title="Удалить">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          </button>
+        </div>
+      `;
+    } else {
+      el.innerHTML = `
+        <div class="item-body">
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.content ? `<div class="item-desc">${escapeHtml(item.content.slice(0, 200))}${item.content.length > 200 ? '…' : ''}</div>` : ''}
+          <div class="item-meta">
+            <span>обн. ${formatDate(item.updatedAt)}</span>
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action" data-id="${item.id}" data-action="edit" title="Редактировать">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="item-action" data-id="${item.id}" data-action="delete" title="Удалить">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          </button>
+        </div>
+      `;
+    }
+    itemsEl.appendChild(el);
+  });
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  if (isToday) {
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
+
+// ============================================================
+//   ITEM ACTIONS
+// ============================================================
+itemsEl.addEventListener('click', (e) => {
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  const id = target.dataset.id;
+  const action = target.dataset.action;
+
+  if (action === 'toggle') {
+    const t = state.tasks.find(t => t.id === id);
+    if (!t) return;
+    t.completed = !t.completed;
+    t.completedAt = t.completed ? now() : null;
+    saveState();
+    render();
+  } else if (action === 'delete') {
+    const tab = state.ui.activeTab;
+    if (!confirm('Удалить?')) return;
+    if (tab === 'tasks') state.tasks = state.tasks.filter(t => t.id !== id);
+    else if (tab === 'ideas') state.ideas = state.ideas.filter(t => t.id !== id);
+    else state.notes = state.notes.filter(t => t.id !== id);
+    saveState();
+    render();
+    toast('Удалено');
+  } else if (action === 'edit') {
+    editItem(id);
+  } else if (action === 'convert') {
+    const idea = state.ideas.find(i => i.id === id);
+    if (!idea) return;
+    state.tasks.unshift({
+      id: uid(),
+      title: idea.title,
+      description: idea.content || '',
+      completed: false,
+      priority: 'medium',
+      tags: idea.tags || [],
+      dueDate: null,
+      createdAt: now(),
+      completedAt: null
+    });
+    state.ideas = state.ideas.filter(i => i.id !== id);
+    saveState();
+    state.ui.activeTab = 'tasks';
+    syncTabUI();
+    render();
+    toast('Идея → задача');
+  }
+});
+
+function editItem(id) {
+  const tab = state.ui.activeTab;
+  let item;
+  if (tab === 'tasks') item = state.tasks.find(t => t.id === id);
+  else if (tab === 'ideas') item = state.ideas.find(t => t.id === id);
+  else item = state.notes.find(t => t.id === id);
+  if (!item) return;
+
+  const title = prompt('Заголовок:', item.title);
+  if (title === null) return;
+  item.title = title.trim() || item.title;
+
+  const descKey = tab === 'tasks' ? 'description' : tab === 'ideas' ? 'content' : 'content';
+  const desc = prompt('Описание (можно пусто):', item[descKey] || '');
+  if (desc !== null) item[descKey] = desc;
+
+  if (tab === 'notes') item.updatedAt = now();
+  saveState();
+  render();
+}
+
+// ============================================================
+//   EXPORT / IMPORT
+// ============================================================
+$('#exportBtn').onclick = () => {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `journal-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Экспортировано');
+};
+
+$('#importBtn').onclick = () => $('#fileInput').click();
+
+$('#fileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const imported = JSON.parse(text);
+    if (!imported.tasks || !imported.ideas || !imported.notes) throw new Error('Не похоже на корректный экспорт');
+    if (!confirm('Заменить текущие данные?')) return;
+    state = {
+      ...defaultState,
+      ...imported,
+      settings: { ...defaultState.settings, ...(imported.settings || {}), apiKey: state.settings.apiKey },
+      ui: { ...defaultState.ui, ...(imported.ui || {}) }
+    };
+    saveState();
+    applyTheme();
+    syncTabUI();
+    render();
+    toast('Импортировано');
+  } catch (err) {
+    alert('Ошибка импорта: ' + err.message);
+  }
+  e.target.value = '';
+});
+
+// ============================================================
+//   SETTINGS
+// ============================================================
+const modalBg = $('#modalBg');
+$('#settingsBtn').onclick = openSettings;
+$('#modalClose').onclick = closeSettings;
+modalBg.addEventListener('click', (e) => { if (e.target === modalBg) closeSettings(); });
+
+function openSettings() {
+  $('#apiKey').value = state.settings.apiKey || '';
+  $('#modelSelect').value = state.settings.model || 'claude-sonnet-4-6';
+  modalBg.classList.add('open');
+}
+function closeSettings() { modalBg.classList.remove('open'); }
+
+$('#btnSave').onclick = () => {
+  state.settings.apiKey = $('#apiKey').value.trim();
+  state.settings.model = $('#modelSelect').value;
+  saveState();
+  updateAIStatus();
+  closeSettings();
+  toast('Настройки сохранены');
+};
+
+$('#btnReset').onclick = () => {
+  if (!confirm('Полный сброс? Это удалит ВСЕ задачи, идеи и заметки.')) return;
+  if (!confirm('Точно? Это необратимо.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = structuredClone(defaultState);
+  saveState();
+  applyTheme();
+  syncTabUI();
+  render();
+  closeSettings();
+  toast('Сброшено');
+};
+
+// ============================================================
+//   AI PANEL
+// ============================================================
+const aiPanel = $('#aiPanel');
+const aiMessages = $('#aiMessages');
+const aiInput = $('#aiInput');
+const aiSend = $('#aiSend');
+const aiStatus = $('#aiStatus');
+
+$('#fab').onclick = () => {
+  aiPanel.classList.add('open');
+  if (state.chat.length === 0) {
+    addAIMessage('assistant',
+      'Привет, Александр. Я подключён к твоему трекеру и могу управлять им напрямую — добавлять, отмечать, удалять, искать. Скажи, что нужно. \n\nПримеры: «добавь задачу проверить отчёт, высокий приоритет», «отметь выполненной задачу про MCP», «покажи активные задачи с тегом работа», «преобразуй последние идеи в задачи».'
+    );
+  } else {
+    renderChat();
+  }
+  setTimeout(() => aiInput.focus(), 300);
+};
+
+$('#aiClose').onclick = () => aiPanel.classList.remove('open');
+
+function updateAIStatus() {
+  if (!state.settings.apiKey) {
+    aiStatus.textContent = 'нет API-ключа';
+    aiStatus.className = 'ai-status error';
+  } else {
+    aiStatus.textContent = `${state.settings.model || 'sonnet'} · готов`;
+    aiStatus.className = 'ai-status connected';
+  }
+}
+
+aiInput.addEventListener('input', () => {
+  aiInput.style.height = 'auto';
+  aiInput.style.height = Math.min(120, aiInput.scrollHeight) + 'px';
+});
+
+aiInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleAISend();
+  }
+});
+
+aiSend.onclick = handleAISend;
+
+function addAIMessage(role, content) {
+  state.chat.push({ role, content, ts: now() });
+  if (state.chat.length > 60) state.chat = state.chat.slice(-60);
+  saveState();
+  renderChat();
+}
+
+function renderChat() {
+  aiMessages.innerHTML = '';
+  state.chat.forEach(m => {
+    const el = document.createElement('div');
+    el.className = 'ai-msg ' + m.role;
+    el.textContent = m.content;
+    aiMessages.appendChild(el);
+  });
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+function showTyping() {
+  const el = document.createElement('div');
+  el.className = 'ai-typing';
+  el.id = 'aiTyping';
+  el.innerHTML = '<span></span><span></span><span></span>';
+  aiMessages.appendChild(el);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+function hideTyping() {
+  const el = $('#aiTyping');
+  if (el) el.remove();
+}
+
+function showToolMsg(text) {
+  const el = document.createElement('div');
+  el.className = 'ai-msg tool';
+  el.textContent = '⚙ ' + text;
+  aiMessages.appendChild(el);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+async function handleAISend() {
+  const text = aiInput.value.trim();
+  if (!text) return;
+
+  if (!state.settings.apiKey) {
+    addAIMessage('assistant', 'Сначала добавь API-ключ Anthropic в настройках (шестерёнка справа сверху).');
+    aiInput.value = '';
+    return;
+  }
+
+  addAIMessage('user', text);
+  aiInput.value = '';
+  aiInput.style.height = 'auto';
+  aiSend.disabled = true;
+
+  try {
+    await runAgentLoop(text);
+  } catch (err) {
+    console.error(err);
+    const el = document.createElement('div');
+    el.className = 'ai-msg error';
+    el.textContent = 'Ошибка: ' + (err.message || String(err));
+    aiMessages.appendChild(el);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  } finally {
+    aiSend.disabled = false;
+  }
+}
+
+// ============================================================
+//   AGENT LOOP — Anthropic Messages API + Tool Use
+// ============================================================
+const TOOLS = [
+  {
+    name: 'list_items',
+    description: 'Показать текущее состояние трекера: задачи, идеи или заметки. Используй это перед удалением/изменением, чтобы найти нужный элемент по названию и получить его id.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        kind: { type: 'string', enum: ['tasks', 'ideas', 'notes', 'all'], description: 'Что показать' },
+        filter: { type: 'string', enum: ['active', 'done', 'all'], description: 'Только для задач: фильтр по статусу' },
+        search: { type: 'string', description: 'Опциональный поиск по подстроке в заголовке/описании/тегах' }
+      },
+      required: ['kind']
+    }
+  },
+  {
+    name: 'create_task',
+    description: 'Создать новую задачу.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+        tags: { type: 'array', items: { type: 'string' } },
+        due_date: { type: 'string', description: 'ISO дата дедлайна, опционально' }
+      },
+      required: ['title']
+    }
+  },
+  {
+    name: 'update_task',
+    description: 'Изменить поля задачи. Передавай только те поля, которые нужно изменить.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'ID задачи' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+        tags: { type: 'array', items: { type: 'string' } },
+        due_date: { type: 'string' },
+        completed: { type: 'boolean' }
+      },
+      required: ['id']
+    }
+  },
+  {
+    name: 'complete_task',
+    description: 'Отметить задачу как выполненную (или вернуть в активные).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        completed: { type: 'boolean', description: 'true = выполнена, false = снова активная. По умолчанию true.' }
+      },
+      required: ['id']
+    }
+  },
+  {
+    name: 'delete_task',
+    description: 'Удалить задачу безвозвратно.',
+    input_schema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id']
+    }
+  },
+  {
+    name: 'create_idea',
+    description: 'Сохранить новую идею.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        content: { type: 'string' },
+        tags: { type: 'array', items: { type: 'string' } }
+      },
+      required: ['title']
+    }
+  },
+  {
+    name: 'delete_idea',
+    description: 'Удалить идею.',
+    input_schema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id']
+    }
+  },
+  {
+    name: 'convert_idea_to_task',
+    description: 'Превратить идею в задачу. Идея удаляется, задача создаётся с теми же данными.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        priority: { type: 'string', enum: ['high', 'medium', 'low'] }
+      },
+      required: ['id']
+    }
+  },
+  {
+    name: 'create_note',
+    description: 'Создать заметку (длинный текст).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        content: { type: 'string' }
+      },
+      required: ['title']
+    }
+  },
+  {
+    name: 'update_note',
+    description: 'Изменить заметку.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+        content: { type: 'string' }
+      },
+      required: ['id']
+    }
+  },
+  {
+    name: 'delete_note',
+    description: 'Удалить заметку.',
+    input_schema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id']
+    }
+  }
+];
+
+const TOOL_LABELS = {
+  list_items: 'смотрю список',
+  create_task: 'создаю задачу',
+  update_task: 'обновляю задачу',
+  complete_task: 'отмечаю задачу',
+  delete_task: 'удаляю задачу',
+  create_idea: 'сохраняю идею',
+  delete_idea: 'удаляю идею',
+  convert_idea_to_task: 'превращаю идею в задачу',
+  create_note: 'создаю заметку',
+  update_note: 'обновляю заметку',
+  delete_note: 'удаляю заметку'
+};
+
+function executeTool(name, input) {
+  switch (name) {
+    case 'list_items': {
+      const kind = input.kind || 'all';
+      const search = (input.search || '').toLowerCase();
+      const filter = input.filter || 'all';
+      const filterFn = (it) => !search || [it.title, it.description, it.content, ...(it.tags || [])]
+        .filter(Boolean).join(' ').toLowerCase().includes(search);
+
+      const result = {};
+      if (kind === 'tasks' || kind === 'all') {
+        let t = state.tasks.filter(filterFn);
+        if (filter === 'active') t = t.filter(x => !x.completed);
+        else if (filter === 'done') t = t.filter(x => x.completed);
+        result.tasks = t.map(x => ({
+          id: x.id, title: x.title, description: x.description,
+          completed: x.completed, priority: x.priority, tags: x.tags,
+          due_date: x.dueDate, created_at: x.createdAt, completed_at: x.completedAt
+        }));
+      }
+      if (kind === 'ideas' || kind === 'all') {
+        result.ideas = state.ideas.filter(filterFn).map(x => ({
+          id: x.id, title: x.title, content: x.content, tags: x.tags, created_at: x.createdAt
+        }));
+      }
+      if (kind === 'notes' || kind === 'all') {
+        result.notes = state.notes.filter(filterFn).map(x => ({
+          id: x.id, title: x.title, content: x.content, created_at: x.createdAt, updated_at: x.updatedAt
+        }));
+      }
+      return result;
+    }
+
+    case 'create_task': {
+      const t = {
+        id: uid(),
+        title: input.title,
+        description: input.description || '',
+        completed: false,
+        priority: input.priority || 'medium',
+        tags: input.tags || [],
+        dueDate: input.due_date || null,
+        createdAt: now(),
+        completedAt: null
+      };
+      state.tasks.unshift(t);
+      saveState();
+      render();
+      return { ok: true, id: t.id, title: t.title };
+    }
+
+    case 'update_task': {
+      const t = state.tasks.find(x => x.id === input.id);
+      if (!t) return { ok: false, error: 'Задача не найдена' };
+      if (input.title !== undefined) t.title = input.title;
+      if (input.description !== undefined) t.description = input.description;
+      if (input.priority !== undefined) t.priority = input.priority;
+      if (input.tags !== undefined) t.tags = input.tags;
+      if (input.due_date !== undefined) t.dueDate = input.due_date;
+      if (input.completed !== undefined) {
+        t.completed = input.completed;
+        t.completedAt = input.completed ? now() : null;
+      }
+      saveState();
+      render();
+      return { ok: true, id: t.id };
+    }
+
+    case 'complete_task': {
+      const t = state.tasks.find(x => x.id === input.id);
+      if (!t) return { ok: false, error: 'Задача не найдена' };
+      const completed = input.completed !== false;
+      t.completed = completed;
+      t.completedAt = completed ? now() : null;
+      saveState();
+      render();
+      return { ok: true, id: t.id, completed };
+    }
+
+    case 'delete_task': {
+      const before = state.tasks.length;
+      state.tasks = state.tasks.filter(x => x.id !== input.id);
+      saveState();
+      render();
+      return { ok: state.tasks.length < before, deleted: state.tasks.length < before };
+    }
+
+    case 'create_idea': {
+      const i = {
+        id: uid(),
+        title: input.title,
+        content: input.content || '',
+        tags: input.tags || [],
+        createdAt: now()
+      };
+      state.ideas.unshift(i);
+      saveState();
+      render();
+      return { ok: true, id: i.id, title: i.title };
+    }
+
+    case 'delete_idea': {
+      const before = state.ideas.length;
+      state.ideas = state.ideas.filter(x => x.id !== input.id);
+      saveState();
+      render();
+      return { ok: state.ideas.length < before, deleted: state.ideas.length < before };
+    }
+
+    case 'convert_idea_to_task': {
+      const idea = state.ideas.find(x => x.id === input.id);
+      if (!idea) return { ok: false, error: 'Идея не найдена' };
+      const t = {
+        id: uid(),
+        title: idea.title,
+        description: idea.content || '',
+        completed: false,
+        priority: input.priority || 'medium',
+        tags: idea.tags || [],
+        dueDate: null,
+        createdAt: now(),
+        completedAt: null
+      };
+      state.tasks.unshift(t);
+      state.ideas = state.ideas.filter(x => x.id !== input.id);
+      saveState();
+      render();
+      return { ok: true, task_id: t.id };
+    }
+
+    case 'create_note': {
+      const n = {
+        id: uid(),
+        title: input.title,
+        content: input.content || '',
+        createdAt: now(),
+        updatedAt: now()
+      };
+      state.notes.unshift(n);
+      saveState();
+      render();
+      return { ok: true, id: n.id, title: n.title };
+    }
+
+    case 'update_note': {
+      const n = state.notes.find(x => x.id === input.id);
+      if (!n) return { ok: false, error: 'Заметка не найдена' };
+      if (input.title !== undefined) n.title = input.title;
+      if (input.content !== undefined) n.content = input.content;
+      n.updatedAt = now();
+      saveState();
+      render();
+      return { ok: true, id: n.id };
+    }
+
+    case 'delete_note': {
+      const before = state.notes.length;
+      state.notes = state.notes.filter(x => x.id !== input.id);
+      saveState();
+      render();
+      return { ok: state.notes.length < before, deleted: state.notes.length < before };
+    }
+
+    default:
+      return { ok: false, error: 'Неизвестный инструмент: ' + name };
+  }
+}
+
+const SYSTEM_PROMPT = `Ты — встроенный агент в личный трекер задач/идей/заметок Александра. Общаешься на русском, кратко и по делу.
+
+Твои возможности — управлять трекером через инструменты:
+- list_items — посмотреть, что есть (используй ВСЕГДА перед изменением, чтобы найти id по названию)
+- create_task / update_task / complete_task / delete_task
+- create_idea / delete_idea / convert_idea_to_task
+- create_note / update_note / delete_note
+
+Правила:
+1. Когда пользователь просит изменить/удалить/отметить что-то по названию — сначала вызови list_items с поиском, чтобы найти точный id, потом действуй.
+2. Если найдено несколько подходящих — уточни у пользователя, какое именно.
+3. После выполнения действий кратко подтверди результат на русском (1-2 предложения), не дублируй детали инструмента.
+4. Если запрос неоднозначный — уточни до выполнения.
+5. Не показывай id пользователю в ответах — он работает с заголовками.
+6. Дату в формате ISO для дедлайнов.
+7. Сегодня: ${new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`;
+
+async function runAgentLoop(userText) {
+  // Build messages from chat history (last 20 turns max)
+  const history = state.chat
+    .slice(0, -1) // exclude the just-added user msg, we'll add it fresh
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .slice(-20)
+    .map(m => ({ role: m.role, content: m.content }));
+
+  const messages = [...history, { role: 'user', content: userText }];
+
+  showTyping();
+
+  let safetyCounter = 0;
+  while (safetyCounter++ < 10) {
+    const resp = await callAnthropic(messages);
+
+    // Check for tool use
+    const toolUses = resp.content.filter(b => b.type === 'tool_use');
+    const textBlocks = resp.content.filter(b => b.type === 'text');
+
+    // Append assistant turn
+    messages.push({ role: 'assistant', content: resp.content });
+
+    if (toolUses.length === 0) {
+      // Final answer
+      hideTyping();
+      const finalText = textBlocks.map(b => b.text).join('\n\n').trim();
+      if (finalText) addAIMessage('assistant', finalText);
+      return;
+    }
+
+    // Show that tools are being called
+    hideTyping();
+    toolUses.forEach(tu => {
+      showToolMsg(TOOL_LABELS[tu.name] || tu.name);
+    });
+
+    // Execute all tool calls
+    const toolResults = toolUses.map(tu => {
+      let result;
+      try {
+        result = executeTool(tu.name, tu.input || {});
+      } catch (err) {
+        result = { ok: false, error: err.message || String(err) };
+      }
+      return {
+        type: 'tool_result',
+        tool_use_id: tu.id,
+        content: JSON.stringify(result)
+      };
+    });
+
+    messages.push({ role: 'user', content: toolResults });
+    showTyping();
+  }
+
+  hideTyping();
+  addAIMessage('assistant', 'Слишком много шагов — останавливаюсь. Попробуй переформулировать.');
+}
+
+async function callAnthropic(messages) {
+  const apiKey = state.settings.apiKey;
+  const model = state.settings.model || 'claude-sonnet-4-6';
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      tools: TOOLS,
+      messages
+    })
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    let errMsg = `HTTP ${resp.status}`;
+    try {
+      const errJson = JSON.parse(errText);
+      errMsg = errJson.error?.message || errMsg;
+    } catch {}
+    throw new Error(errMsg);
+  }
+
+  return await resp.json();
+}
+
+// ============================================================
+//   TOAST
+// ============================================================
+let toastTimer;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ============================================================
+//   SERVICE WORKER
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+// ============================================================
+//   INIT
+// ============================================================
+syncTabUI();
+$$('#composerOptions .chip').forEach((c) =>
+  c.classList.toggle('active', c.dataset.priority === state.ui.composerPriority)
+);
+render();
+updateAIStatus();
+
+// Demo data on first run
+if (state.tasks.length === 0 && state.ideas.length === 0 && state.notes.length === 0) {
+  state.tasks.push(
+    { id: uid(), title: 'Поставить трекер как PWA на телефон', description: '', completed: false, priority: 'high', tags: ['setup'], dueDate: null, createdAt: now(), completedAt: null },
+    { id: uid(), title: 'Добавить API-ключ Anthropic в настройках', description: 'Чтобы Claude мог управлять трекером голосом и текстом', completed: false, priority: 'medium', tags: ['setup'], dueDate: null, createdAt: now(), completedAt: null },
+    { id: uid(), title: 'Попробовать сказать Claude: «покажи мои задачи»', description: '', completed: false, priority: 'low', tags: [], dueDate: null, createdAt: now(), completedAt: null }
+  );
+  state.ideas.push(
+    { id: uid(), title: 'Город будущего на балтийском побережье', content: 'Идея, которая всплывала раньше — можно вернуться и развить', tags: ['большие'], createdAt: now() }
+  );
+  saveState();
+  render();
+}
+
+</script>
+</body>
+</html>

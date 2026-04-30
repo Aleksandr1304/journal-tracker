@@ -1,0 +1,19 @@
+{
+  "name": "Журнал дел — Личный трекер",
+  "short_name": "Журнал",
+  "description": "Личный трекер задач, идей и заметок со встроенным Claude-агентом",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3ede0",
+  "theme_color": "#1a1815",
+  "orientation": "any",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
