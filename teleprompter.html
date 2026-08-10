@@ -194,6 +194,54 @@ input[type="range"]::-moz-range-thumb {
 .switch.on { background: var(--accent-2); }
 .switch.on::after { transform: translateX(20px); background: #14120f; }
 
+.tg-box {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+.tg-box summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink-soft);
+  list-style: none;
+}
+.tg-box summary::-webkit-details-marker { display: none; }
+.tg-box summary::before { content: '✈️ '; }
+#tgState { color: var(--ink-muted); font-family: var(--mono); font-size: 12px; }
+#tgState.ok { color: var(--done); }
+.tg-help, .tg-note {
+  font-size: 13px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+  margin: 10px 0 8px;
+}
+.tg-note { margin-bottom: 2px; }
+.tg-box input {
+  width: 100%;
+  background: var(--bg-soft, #1c1916);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--mono);
+  margin-bottom: 8px;
+}
+.tg-box input:focus { border-color: var(--accent-2); }
+.tg-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.tg-row input { flex: 1; min-width: 130px; margin-bottom: 0; }
+.tg-row button {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.tg-row button:hover { border-color: var(--accent-2); color: var(--ink); }
+.tg-row button:disabled { opacity: 0.5; }
+
 .start-btn {
   display: flex;
   align-items: center;
@@ -643,6 +691,21 @@ body.staged { overflow: hidden; }
     </div>
   </div>
 
+  <details class="tg-box" id="tgBox">
+    <summary>Отправка видео в Telegram · <span id="tgState">не настроено</span></summary>
+    <p class="tg-help">Один раз: в Telegram открой <b>@BotFather</b>, отправь команду <b>/newbot</b>,
+    придумай имя — получишь токен, вставь его сюда. Потом напиши своему новому боту любое сообщение
+    (например /start) и нажми «Найти мой чат».</p>
+    <input id="tgToken" type="text" placeholder="Токен бота (вида 123456789:AAF3…)" autocomplete="off" spellcheck="false" />
+    <div class="tg-row">
+      <input id="tgChat" type="text" placeholder="Chat ID" autocomplete="off" spellcheck="false" />
+      <button id="tgFind" type="button">Найти мой чат</button>
+      <button id="tgTest" type="button">Проверить</button>
+    </div>
+    <p class="tg-note">Токен хранится только на этом устройстве и никуда, кроме Telegram, не отправляется.
+    Ограничение Telegram для ботов — видео до 50 МБ (примерно до полутора минут записи).</p>
+  </details>
+
   <button class="start-btn" id="startBtn">
     <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
     Запустить суфлёр
@@ -675,7 +738,7 @@ body.staged { overflow: hidden; }
         <li>Вставь текст ролика в поле выше — он сохранится сам, можно возвращаться к нему.</li>
         <li>Нажми «Запустить суфлёр», разреши доступ к камере и микрофону.</li>
         <li>Тап по экрану — старт/пауза прокрутки. По умолчанию вместе со стартом включается запись.</li>
-        <li>Кнопка <b>REC</b> — остановить запись. Дальше: «Сохранить/Поделиться» (на iPhone — прямо в Фото, оттуда сразу в Инстаграм) или «Скачать».</li>
+        <li>Кнопка <b>REC</b> — остановить запись. Дальше: «Сохранить/Поделиться» (на iPhone — прямо в Фото, оттуда сразу в Инстаграм), «Отправить в Telegram» (если настроен бот) или «Скачать».</li>
         <li>Провести пальцем по тексту — перемотка. Кнопками внизу меняются скорость и размер на ходу.</li>
         <li>Для сторис и рилс снимай вертикально: как держишь телефон — таким и будет видео.</li>
       </ul>
@@ -753,6 +816,10 @@ body.staged { overflow: hidden; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
           Сохранить / Поделиться
         </button>
+        <button id="tgSendBtn" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          <span id="tgSendLabel">Отправить в Telegram</span>
+        </button>
         <a id="downloadBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
           Скачать файл
@@ -763,7 +830,8 @@ body.staged { overflow: hidden; }
         </button>
         <button id="closeSaveBtn">Закрыть</button>
       </div>
-      <div class="save-hint">Через «Сохранить / Поделиться» видео уходит куда скажешь: в Фото, сразу в Instagram или в приложение Claude.</div>
+      <div class="save-hint">«Сохранить / Поделиться» — в Фото, сразу в Instagram или в приложение Claude.
+      «Отправить в Telegram» — ролик улетает твоему боту (кнопка появляется, когда Telegram настроен на главном экране).</div>
     </div>
   </div>
 </div>
@@ -952,6 +1020,7 @@ async function checkRemoteScript(force) {
     try {
       localStorage.setItem(SCRIPT_KEY, remote.text);
       localStorage.setItem(REMOTE_STAMP_KEY, stamp);
+      localStorage.setItem('prompter.remoteTitle', remote.title || '');
     } catch (e) {}
     updateSetupMeta();
     remoteInfo.textContent = 'загружен текст: ' + label;
@@ -972,6 +1041,133 @@ refreshBtn.onclick = async () => {
 // при открытии страницы сами проверяем, не прислал ли Claude новый текст
 // (кроме случая, когда текст только что передан через ?text= в адресе)
 if (!urlTextUsed) checkRemoteScript(false);
+
+/* ---------- Telegram: отправка записанного видео своему боту ---------- */
+const TG_KEY = 'prompter.tg';
+const TG_MAX_BYTES = 49.5 * 1048576; // лимит Telegram для ботов — 50 МБ
+
+let tgCfg = { token: '', chatId: '' };
+try { tgCfg = { ...tgCfg, ...(JSON.parse(localStorage.getItem(TG_KEY) || '{}')) }; } catch (e) {}
+
+const tgToken = $('#tgToken'), tgChat = $('#tgChat'), tgStateEl = $('#tgState');
+tgToken.value = tgCfg.token;
+tgChat.value = tgCfg.chatId;
+
+function tgConfigured() { return !!(tgCfg.token && tgCfg.chatId); }
+
+function saveTg() {
+  tgCfg.token = tgToken.value.trim();
+  tgCfg.chatId = tgChat.value.trim();
+  try { localStorage.setItem(TG_KEY, JSON.stringify(tgCfg)); } catch (e) {}
+  updateTgState();
+}
+tgToken.addEventListener('input', saveTg);
+tgChat.addEventListener('input', saveTg);
+
+function updateTgState(text, ok) {
+  tgStateEl.textContent = text || (tgConfigured() ? 'настроено' : 'не настроено');
+  tgStateEl.classList.toggle('ok', ok !== undefined ? ok : tgConfigured());
+}
+updateTgState();
+
+async function tgApi(method, params) {
+  const r = await fetch('https://api.telegram.org/bot' + tgCfg.token + '/' + method, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params || {})
+  });
+  return r.json();
+}
+
+$('#tgFind').onclick = async () => {
+  saveTg();
+  if (!tgCfg.token) { toast('Сначала вставь токен бота'); return; }
+  const btn = $('#tgFind');
+  btn.disabled = true;
+  try {
+    const res = await tgApi('getUpdates', { limit: 100 });
+    const chats = (res.result || []).map(u => (u.message && u.message.chat) || null)
+      .filter(c => c && c.type === 'private');
+    if (chats.length) {
+      const c = chats[chats.length - 1];
+      tgChat.value = String(c.id);
+      saveTg();
+      updateTgState('чат найден: ' + (c.first_name || c.username || c.id), true);
+      toast('Чат найден ✅');
+    } else {
+      toast('Чат не найден. Напиши своему боту /start и нажми ещё раз', 4500);
+    }
+  } catch (e) {
+    toast('Не получилось связаться с Telegram — проверь токен и интернет', 4500);
+  }
+  btn.disabled = false;
+};
+
+$('#tgTest').onclick = async () => {
+  saveTg();
+  if (!tgConfigured()) { toast('Нужны токен и Chat ID'); return; }
+  const btn = $('#tgTest');
+  btn.disabled = true;
+  try {
+    const res = await tgApi('sendMessage', { chat_id: tgCfg.chatId, text: '✅ Суфлёр подключён. Сюда будут прилетать записанные ролики.' });
+    if (res.ok) { updateTgState('работает', true); toast('Связь есть — проверь сообщение у бота ✅'); }
+    else toast('Telegram ответил ошибкой: ' + (res.description || res.error_code), 5000);
+  } catch (e) {
+    toast('Не получилось связаться с Telegram — проверь токен и интернет', 4500);
+  }
+  btn.disabled = false;
+};
+
+function tgCaption() {
+  let title = '';
+  try {
+    const raw = localStorage.getItem('prompter.remoteTitle');
+    if (raw) title = raw;
+  } catch (e) {}
+  const d = new Date();
+  return (title ? '🎬 ' + title + '\n' : '🎬 Ролик из суфлёра\n') +
+    d.toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) +
+    ' · ' + fmtDur(lastRecSec);
+}
+
+function tgSendVideo() {
+  if (!lastBlob || !tgConfigured()) return;
+  const btn = $('#tgSendBtn'), label = $('#tgSendLabel');
+  if (lastBlob.size > TG_MAX_BYTES) {
+    toast('Файл больше 50 МБ — Telegram не примет его от бота. Сохрани через «Поделиться».', 5500);
+    return;
+  }
+  btn.disabled = true;
+  const fd = new FormData();
+  fd.append('chat_id', tgCfg.chatId);
+  fd.append('supports_streaming', 'true');
+  fd.append('caption', tgCaption());
+  fd.append('video', lastBlob, fileName());
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.telegram.org/bot' + tgCfg.token + '/sendVideo');
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) label.textContent = 'Отправка… ' + Math.round(e.loaded / e.total * 100) + '%';
+  };
+  const fail = (msg) => {
+    label.textContent = 'Отправить в Telegram';
+    btn.disabled = false;
+    toast(msg, 5500);
+  };
+  xhr.onload = () => {
+    let res = null;
+    try { res = JSON.parse(xhr.responseText); } catch (e) {}
+    if (xhr.status === 200 && res && res.ok) {
+      label.textContent = '✅ Улетело в Telegram';
+      toast('Видео у бота — открой Telegram');
+      setTimeout(() => { label.textContent = 'Отправить в Telegram'; btn.disabled = false; }, 2500);
+    } else {
+      fail('Telegram не принял видео: ' + ((res && res.description) || ('код ' + xhr.status)));
+    }
+  };
+  xhr.onerror = () => fail('Отправка сорвалась — проверь интернет и попробуй ещё раз');
+  xhr.send(fd);
+}
+$('#tgSendBtn').onclick = tgSendVideo;
 
 /* ---------- stage elements ---------- */
 const stage = $('#stage'), setup = $('#setup');
@@ -1215,10 +1411,12 @@ function startRecording() {
   discardTake(); // новый дубль затирает несохранённый предыдущий
   recMime = pickMime();
   recChunks = [];
+  // с настроенным Telegram пишем экономнее, чтобы типичный ролик влезал в лимит 50 МБ
+  const bps = tgConfigured() ? 4_500_000 : 8_000_000;
   try {
     recorder = new MediaRecorder(stream, recMime
-      ? { mimeType: recMime, videoBitsPerSecond: 8_000_000 }
-      : { videoBitsPerSecond: 8_000_000 });
+      ? { mimeType: recMime, videoBitsPerSecond: bps }
+      : { videoBitsPerSecond: bps });
   } catch (e) {
     try { recorder = new MediaRecorder(stream); } catch (e2) {
       toast('Запись не поддерживается этим браузером', 4000);
@@ -1292,6 +1490,10 @@ function openSavePanel() {
   } else {
     share.style.display = 'none';
   }
+  const tgBtn = $('#tgSendBtn');
+  tgBtn.style.display = tgConfigured() ? '' : 'none';
+  tgBtn.disabled = false;
+  $('#tgSendLabel').textContent = 'Отправить в Telegram';
   $('#savePanel').classList.add('show');
 }
 
