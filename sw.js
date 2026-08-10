@@ -1,7 +1,8 @@
-const CACHE_NAME = 'journal-v5';
+const CACHE_NAME = 'journal-v6';
 const ASSETS = [
   './',
   './index.html',
+  './teleprompter.html',
   './manifest.json',
   './icon.svg'
 ];
