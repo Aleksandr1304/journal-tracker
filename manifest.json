@@ -15,13 +15,5 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "Суфлёр для записи видео",
-      "short_name": "Суфлёр",
-      "url": "./teleprompter.html",
-      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
-    }
   ]
 }

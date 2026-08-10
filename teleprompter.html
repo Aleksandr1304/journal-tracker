@@ -4,15 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
 <meta name="theme-color" content="#000000" />
-<title>Суфлёр · Журнал</title>
-<link rel="icon" type="image/svg+xml" href="icon.svg" />
-<link rel="apple-touch-icon" href="icon.svg" />
+<title>Суфлёр для записи видео</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='20'%20fill='%23141210'/%3E%3Cpolygon%20points='38,28%2075,50%2038,72'%20fill='%23d9a04a'/%3E%3C/svg%3E" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <style>
 :root {
@@ -24,9 +19,9 @@
   --line: #2f2a23;
   --accent: #d4584d;
   --accent-2: #d9a04a;
-  --serif: 'Instrument Serif', 'Times New Roman', serif;
-  --sans: 'Inter Tight', -apple-system, system-ui, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,13 +71,6 @@ button { cursor: pointer; }
   letter-spacing: 0.01em;
 }
 .setup-header h1 em { font-style: italic; color: var(--accent-2); }
-.back-link {
-  color: var(--ink-muted);
-  text-decoration: none;
-  font-size: 14px;
-  padding: 6px 0;
-}
-.back-link:hover { color: var(--ink-soft); }
 
 .script-label {
   display: flex;
@@ -571,15 +559,14 @@ body.staged { overflow: hidden; }
 <!-- ============ SETUP ============ -->
 <div class="setup" id="setup">
   <div class="setup-header">
-    <h1>Суфлёр <em>·</em> запись</h1>
-    <a class="back-link" href="./">← Журнал</a>
+    <h1>Суфлёр <em>·</em> запись видео</h1>
   </div>
 
   <div class="script-label">
     <span>Текст для чтения</span>
     <span id="scriptMeta">0 слов</span>
   </div>
-  <textarea id="scriptInput" placeholder="Вставь сюда текст сценария — например, из чата с Claude в Журнале…"></textarea>
+  <textarea id="scriptInput" placeholder="Вставь сюда текст ролика — например, сценарий, который написал Claude…"></textarea>
 
   <div class="controls">
     <div class="ctrl">
@@ -644,11 +631,12 @@ body.staged { overflow: hidden; }
     <details>
       <summary>Как пользоваться</summary>
       <ul>
-        <li>Вставь текст (из чата с Claude в Журнале есть кнопка «читать в суфлёре» — текст подставится сам).</li>
+        <li>Вставь текст ролика в поле выше — он сохранится сам, можно возвращаться к нему.</li>
         <li>Нажми «Запустить суфлёр», разреши доступ к камере и микрофону.</li>
         <li>Тап по экрану — старт/пауза прокрутки. По умолчанию вместе со стартом включается запись.</li>
-        <li>Кнопка <b>REC</b> — остановить запись. Дальше: «Сохранить/Поделиться» (на iPhone — прямо в Фото) или «Скачать».</li>
+        <li>Кнопка <b>REC</b> — остановить запись. Дальше: «Сохранить/Поделиться» (на iPhone — прямо в Фото, оттуда сразу в Инстаграм) или «Скачать».</li>
         <li>Провести пальцем по тексту — перемотка. Кнопками внизу меняются скорость и размер на ходу.</li>
+        <li>Для сторис и рилс снимай вертикально: как держишь телефон — таким и будет видео.</li>
       </ul>
     </details>
     <details>
@@ -750,18 +738,18 @@ body.staged { overflow: hidden; }
 
 const $ = (s) => document.querySelector(s);
 
-const SCRIPT_KEY = 'journal.prompter.script';
-const SETTINGS_KEY = 'journal.prompter.settings';
+const SCRIPT_KEY = 'prompter.script';
+const SETTINGS_KEY = 'prompter.settings';
 
-const DEMO_TEXT = `Это суфлёр. Вставь сюда свой текст — например, сценарий, который написал Claude в Журнале.
+const DEMO_TEXT = `Это суфлёр для записи видео. Вставь сюда сценарий ролика — например, текст, который написал Claude.
 
-Во время записи текст плавно ползёт вверх у самой камеры, и ты просто читаешь его, глядя в объектив.
+Во время записи текст плавно ползёт вверх у самой камеры, и ты просто читаешь его, глядя в объектив. Со стороны выглядит, будто говоришь без бумажки.
 
-В готовом видео этого текста не будет: запись идёт напрямую с камеры, а не с экрана.
+В готовом видео этого текста не будет: запись идёт напрямую с камеры, а не с экрана. В файл попадаешь только ты и звук с микрофона.
 
 Тап по экрану — старт и пауза. Свайп по тексту — перемотка. Кнопки внизу — скорость и размер.
 
-Удачной съёмки!`;
+Для сторис и рилс держи телефон вертикально — видео запишется вертикальным. Удачной съёмки!`;
 
 /* ---------- state ---------- */
 const defaults = {
@@ -1422,11 +1410,6 @@ window.addEventListener('pagehide', () => {
   stopCamera();
   releaseWakeLock();
 });
-
-// service worker той же PWA (регистрация идемпотентна)
-if ('serviceWorker' in navigator && secure) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
 </script>
 </body>
 </html>

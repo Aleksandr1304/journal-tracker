@@ -791,17 +791,6 @@ button { cursor: pointer; }
   color: var(--accent);
   font-size: 12.5px;
 }
-.ai-msg-prompter {
-  align-self: flex-start;
-  margin-top: -10px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-family: var(--mono);
-  color: var(--accent-2);
-  border: 1px dashed var(--line);
-  border-radius: 8px;
-}
-.ai-msg-prompter:hover { border-color: var(--accent-2); }
 
 .ai-input-row {
   border-top: 1px solid var(--line);
@@ -1037,9 +1026,6 @@ button { cursor: pointer; }
       <div class="subtitle">Личный трекер · v1.0</div>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" id="prompterBtn" title="Суфлёр для записи видео">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><polygon points="10 7 15 10 10 13 10 7" fill="currentColor" stroke="none"/></svg>
-      </button>
       <button class="icon-btn" id="themeToggle" title="Сменить тему">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
       </button>
@@ -1591,9 +1577,6 @@ function render() {
           </div>
         </div>
         <div class="item-actions">
-          <button class="item-action" data-id="${item.id}" data-action="prompter" title="Читать в суфлёре">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-          </button>
           <button class="item-action" data-id="${item.id}" data-action="edit" title="Редактировать">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
@@ -1856,22 +1839,8 @@ itemsEl.addEventListener('click', (e) => {
     syncTabUI();
     render();
     toast('Идея → задача');
-  } else if (action === 'prompter') {
-    const note = state.notes.find(n => n.id === id);
-    if (!note) return;
-    openInPrompter([note.title, note.content || ''].filter(Boolean).join('\n\n'));
   }
 });
-
-// ============================================================
-//   СУФЛЁР (teleprompter.html)
-// ============================================================
-function openInPrompter(text) {
-  try { localStorage.setItem('journal.prompter.script', text); } catch (e) {}
-  location.href = 'teleprompter.html';
-}
-
-$('#prompterBtn').onclick = () => { location.href = 'teleprompter.html'; };
 
 function editItem(id) {
   const tab = state.ui.activeTab;
@@ -2042,14 +2011,6 @@ function renderChat() {
     el.className = 'ai-msg ' + m.role;
     el.textContent = m.content;
     aiMessages.appendChild(el);
-    // длинный ответ Claude — вероятно, сценарий: даём отправить его в суфлёр
-    if (m.role === 'assistant' && m.content && m.content.length > 120) {
-      const act = document.createElement('button');
-      act.className = 'ai-msg-prompter';
-      act.textContent = '▶ читать в суфлёре';
-      act.onclick = () => openInPrompter(m.content);
-      aiMessages.appendChild(act);
-    }
   });
   aiMessages.scrollTop = aiMessages.scrollHeight;
 }
