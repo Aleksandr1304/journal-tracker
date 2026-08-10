@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#000000" />
+<title>Суфлёр для записи видео</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='20'%20fill='%23141210'/%3E%3Cpolygon%20points='38,28%2075,50%2038,72'%20fill='%23d9a04a'/%3E%3C/svg%3E" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<style>
+:root {
+  --bg: #14120f;
+  --paper: #1f1c18;
+  --ink: #ede5d2;
+  --ink-soft: #c2b89f;
+  --ink-muted: #8b8270;
+  --line: #2f2a23;
+  --accent: #d4584d;
+  --accent-2: #d9a04a;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+button { cursor: pointer; }
+::selection { background: var(--accent); color: #fff; }
+
+/* ============ SETUP SCREEN ============ */
+.setup {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
+}
+
+.setup-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.setup-header h1 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+.setup-header h1 em { font-style: italic; color: var(--accent-2); }
+
+.script-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+  font-family: var(--mono);
+}
+#scriptInput {
+  width: 100%;
+  min-height: 220px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 16px;
+  line-height: 1.6;
+  resize: vertical;
+  color: var(--ink);
+}
+#scriptInput:focus { border-color: var(--accent-2); }
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+  margin: 22px 0;
+}
+@media (max-width: 480px) { .controls { grid-template-columns: 1fr; } }
+
+.ctrl {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.ctrl-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.ctrl-label .val { font-family: var(--mono); color: var(--accent-2); }
+
+input[type="range"] {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  border: 3px solid var(--bg);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  border: 3px solid var(--bg);
+  cursor: pointer;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+}
+.toggle-row span { font-size: 14px; color: var(--ink-soft); }
+.switch {
+  position: relative;
+  width: 48px; height: 28px;
+  border-radius: 14px;
+  background: var(--line);
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  transition: transform 0.2s, background 0.2s;
+}
+.switch.on { background: var(--accent-2); }
+.switch.on::after { transform: translateX(20px); background: #14120f; }
+
+.start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 30px -10px rgba(212, 88, 77, 0.5);
+}
+.start-btn:active { transform: scale(0.98); }
+.start-btn svg { width: 20px; height: 20px; }
+
+.hints {
+  margin-top: 26px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.hints details {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+}
+.hints summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink-soft);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hints summary::before { content: '›'; color: var(--accent-2); transition: transform 0.15s; }
+.hints details[open] summary::before { transform: rotate(90deg); }
+.hints summary::-webkit-details-marker { display: none; }
+.hints p, .hints li {
+  font-size: 13.5px;
+  color: var(--ink-muted);
+  margin: 8px 0 4px;
+  line-height: 1.6;
+}
+.hints ul { padding-left: 18px; margin: 6px 0; }
+.hints b { color: var(--ink-soft); font-weight: 600; }
+.hints kbd {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--ink-soft);
+}
+
+.warn-box {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  display: none;
+}
+.warn-box.show { display: block; }
+
+/* ============ STAGE (PROMPTER) ============ */
+.stage {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: none;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.stage.active { display: block; }
+body.staged { overflow: hidden; }
+
+#cam {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* зеркальное превью, как в обычной камере; на запись не влияет */
+  display: none;
+}
+#cam.show { display: block; }
+#camDim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+#viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: default;
+}
+#viewport.mirrored { transform: scaleX(-1); }
+
+#scriptScroll {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-left: max(22px, env(safe-area-inset-left));
+  padding-right: max(22px, env(safe-area-inset-right));
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.9);
+  will-change: transform;
+  word-break: break-word;
+}
+#scriptScroll p { margin-bottom: 0.85em; }
+#scriptScroll .end-mark {
+  text-align: center;
+  color: var(--accent-2);
+  font-size: 0.6em;
+  font-family: var(--mono);
+  opacity: 0.85;
+  padding-top: 1.5em;
+}
+
+#focusLine {
+  position: absolute;
+  left: 0; right: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+#focusLine::before {
+  content: '';
+  width: 0; height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 11px solid var(--accent-2);
+  margin-left: max(4px, env(safe-area-inset-left));
+  opacity: 0.9;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8));
+}
+#focusLine::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(217,160,74,0.5), transparent 60%);
+  margin-left: 6px;
+}
+
+#progress {
+  position: absolute;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  background: var(--accent-2);
+  opacity: 0.85;
+  z-index: 30;
+  transition: width 0.2s linear;
+}
+
+/* --- bars --- */
+.bar {
+  position: absolute;
+  left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+  z-index: 40;
+  transition: opacity 0.35s;
+}
+.bar.hidden { opacity: 0; pointer-events: none; }
+#topBar {
+  top: 0;
+  padding-top: max(10px, env(safe-area-inset-top));
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
+}
+#bottomBar {
+  bottom: 0;
+  padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 6px));
+  justify-content: center;
+  background: linear-gradient(0deg, rgba(0,0,0,0.55), transparent);
+}
+
+.sbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(20, 18, 15, 0.65);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f2ecdc;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+.sbtn:active { transform: scale(0.94); }
+.sbtn svg { width: 21px; height: 21px; }
+.sbtn.big {
+  min-width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: rgba(217, 160, 74, 0.92);
+  color: #14120f;
+  border: none;
+}
+.sbtn.big svg { width: 26px; height: 26px; }
+.sbtn.toggled { background: rgba(217, 160, 74, 0.85); color: #14120f; }
+
+#recBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: rgba(20, 18, 15, 0.65);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f2ecdc;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+#recBtn .dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: border-radius 0.2s;
+}
+#recBtn.recording { border-color: var(--accent); color: #fff; }
+#recBtn.recording .dot {
+  border-radius: 3px;
+  animation: recPulse 1.2s ease-in-out infinite;
+}
+@keyframes recPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+#timeInfo {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: rgba(242, 236, 220, 0.85);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+
+/* --- HUD toast --- */
+#hud {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 18, 15, 0.8);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-family: var(--mono);
+  font-size: 16px;
+  color: #fff;
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+#hud.show { opacity: 1; }
+
+/* --- countdown --- */
+#countdown {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 70;
+  background: rgba(0,0,0,0.35);
+}
+#countdown.show { display: flex; }
+#countdown .num {
+  font-family: var(--serif);
+  font-size: min(38vw, 220px);
+  color: #fff;
+  text-shadow: 0 4px 40px rgba(0,0,0,0.8);
+  animation: cdPop 1s ease-in-out infinite;
+}
+@keyframes cdPop {
+  0% { transform: scale(0.85); opacity: 0.4; }
+  25% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.02); opacity: 0.9; }
+}
+
+/* --- save panel --- */
+#savePanel {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+  background: rgba(0,0,0,0.72);
+  padding: 20px;
+}
+#savePanel.show { display: flex; }
+.save-card {
+  width: 100%;
+  max-width: 440px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 24px 80px -20px rgba(0,0,0,0.9);
+}
+.save-card h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+.save-card .save-meta {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  margin-bottom: 12px;
+}
+.save-card video {
+  width: 100%;
+  border-radius: 10px;
+  background: #000;
+  margin-bottom: 14px;
+  max-height: 40dvh;
+}
+.save-actions { display: flex; flex-direction: column; gap: 9px; }
+.save-actions button, .save-actions a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.save-actions .primary { background: var(--accent-2); color: #14120f; border: none; }
+.save-actions .danger { color: var(--accent); }
+.save-actions svg { width: 18px; height: 18px; }
+
+/* --- toast --- */
+#toast {
+  position: fixed;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  max-width: 88vw;
+  text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ============ SETUP ============ -->
+<div class="setup" id="setup">
+  <div class="setup-header">
+    <h1>Суфлёр <em>·</em> запись видео</h1>
+  </div>
+
+  <div class="script-label">
+    <span>Текст для чтения</span>
+    <span id="scriptMeta">0 слов</span>
+  </div>
+  <textarea id="scriptInput" placeholder="Вставь сюда текст ролика — например, сценарий, который написал Claude…"></textarea>
+
+  <div class="controls">
+    <div class="ctrl">
+      <div class="ctrl-label"><span>Размер текста</span><span class="val" id="fontVal">44</span></div>
+      <input type="range" id="fontRange" min="26" max="80" step="2" value="44" />
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-label"><span>Скорость прокрутки</span><span class="val" id="speedVal">30</span></div>
+      <input type="range" id="speedRange" min="8" max="100" step="2" value="30" />
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-label"><span>Затемнение камеры-фона</span><span class="val" id="dimVal">50%</span></div>
+      <input type="range" id="dimRange" min="0" max="90" step="5" value="50" />
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-label"><span>Обратный отсчёт</span><span class="val" id="cdVal">3 сек</span></div>
+      <input type="range" id="cdRange" min="0" max="5" step="1" value="3" />
+    </div>
+    <div class="ctrl">
+      <div class="toggle-row">
+        <span>Камера и запись видео</span>
+        <div class="switch on" id="camToggle" role="switch" aria-checked="true" tabindex="0"></div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="toggle-row">
+        <span>Запись сама стартует с прокруткой</span>
+        <div class="switch on" id="autoRecToggle" role="switch" aria-checked="true" tabindex="0"></div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="toggle-row">
+        <span>Зеркальный текст (для стекла-суфлёра)</span>
+        <div class="switch" id="mirrorToggle" role="switch" aria-checked="false" tabindex="0"></div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-label"><span>Примерная длительность</span><span class="val" id="durVal">—</span></div>
+      <div style="font-size:12.5px;color:var(--ink-muted)">при выбранной скорости и размере</div>
+    </div>
+  </div>
+
+  <button class="start-btn" id="startBtn">
+    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+    Запустить суфлёр
+  </button>
+
+  <div class="warn-box" id="secureWarn">
+    ⚠️ Камера недоступна: страница открыта не по HTTPS (и не с localhost). Суфлёр будет работать
+    без камеры — текст можно читать, снимая на другое устройство. Чтобы включить камеру и запись,
+    открой страницу по HTTPS (например, через GitHub Pages) или с localhost.
+  </div>
+
+  <div class="hints">
+    <details open>
+      <summary>Почему суфлёра не будет видно в записи</summary>
+      <p>Запись идёт <b>напрямую с камеры</b>, а не с экрана. Бегущий текст — это просто интерфейс
+      поверх превью: в файл он не попадает в принципе. В готовом видео — только ты и звук с микрофона.</p>
+      <p>Текст держится у <b>верхнего края экрана, рядом с фронтальной камерой</b> — взгляд остаётся
+      почти в объектив, и не заметно, что ты читаешь.</p>
+    </details>
+    <details>
+      <summary>Как пользоваться</summary>
+      <ul>
+        <li>Вставь текст ролика в поле выше — он сохранится сам, можно возвращаться к нему.</li>
+        <li>Нажми «Запустить суфлёр», разреши доступ к камере и микрофону.</li>
+        <li>Тап по экрану — старт/пауза прокрутки. По умолчанию вместе со стартом включается запись.</li>
+        <li>Кнопка <b>REC</b> — остановить запись. Дальше: «Сохранить/Поделиться» (на iPhone — прямо в Фото, оттуда сразу в Инстаграм) или «Скачать».</li>
+        <li>Провести пальцем по тексту — перемотка. Кнопками внизу меняются скорость и размер на ходу.</li>
+        <li>Для сторис и рилс снимай вертикально: как держишь телефон — таким и будет видео.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Съёмка на другую камеру</summary>
+      <p>Выключи «Камера и запись» — останется чистый бегущий текст на чёрном фоне. Поставь телефон
+      или ноутбук с суфлёром вплотную к объективу камеры, на которую снимаешь: в кадр он не попадает,
+      а ты читаешь. Для профессионального стекла-суфлёра включи «Зеркальный текст».</p>
+    </details>
+    <details>
+      <summary>Горячие клавиши (на компьютере)</summary>
+      <p>
+        <kbd>Пробел</kbd> старт/пауза · <kbd>↑</kbd>/<kbd>↓</kbd> скорость ·
+        <kbd>←</kbd>/<kbd>→</kbd> перемотка · <kbd>+</kbd>/<kbd>−</kbd> размер текста ·
+        <kbd>R</kbd> в начало · <kbd>M</kbd> зеркало · <kbd>F</kbd> полный экран · <kbd>Esc</kbd> выход
+      </p>
+    </details>
+  </div>
+</div>
+
+<!-- ============ STAGE ============ -->
+<div class="stage" id="stage">
+  <video id="cam" autoplay muted playsinline></video>
+  <div id="camDim"></div>
+
+  <div id="viewport">
+    <div id="scriptScroll"></div>
+  </div>
+  <div id="focusLine"></div>
+  <div id="progress"></div>
+
+  <div class="bar" id="topBar">
+    <button class="sbtn" id="exitBtn" title="Выход">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <button id="recBtn" style="display:none"><span class="dot"></span><span id="recLabel">REC</span></button>
+    <span id="timeInfo">—</span>
+    <button class="sbtn" id="fsBtn" title="Полный экран">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
+  </div>
+
+  <div class="bar" id="bottomBar">
+    <button class="sbtn" id="restartBtn" title="В начало">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    </button>
+    <button class="sbtn" id="slowBtn" title="Медленнее">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 19l-7-7 7-7M19 19l-7-7 7-7"/></svg>
+    </button>
+    <button class="sbtn big" id="playBtn" title="Старт / пауза">
+      <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+      <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg>
+    </button>
+    <button class="sbtn" id="fastBtn" title="Быстрее">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+    </button>
+    <button class="sbtn" id="fontMinusBtn" title="Мельче" style="font-weight:700;font-size:15px">A−</button>
+    <button class="sbtn" id="fontPlusBtn" title="Крупнее" style="font-weight:700;font-size:19px">A+</button>
+    <button class="sbtn" id="mirrorBtn" title="Зеркальный текст">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+    </button>
+  </div>
+
+  <div id="hud"></div>
+  <div id="countdown"><div class="num" id="cdNum">3</div></div>
+
+  <div id="savePanel">
+    <div class="save-card">
+      <h2>Дубль записан</h2>
+      <div class="save-meta" id="saveMeta"></div>
+      <video id="savePreview" controls playsinline></video>
+      <div class="save-actions">
+        <button class="primary" id="shareBtn" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+          Сохранить / Поделиться
+        </button>
+        <a id="downloadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Скачать файл
+        </a>
+        <button id="retakeBtn" class="danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Удалить дубль и переснять
+        </button>
+        <button id="closeSaveBtn">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   Суфлёр: автопрокрутка текста поверх превью камеры + запись
+   видео напрямую с потока камеры (в записи суфлёра нет).
+   ============================================================ */
+
+const $ = (s) => document.querySelector(s);
+
+const SCRIPT_KEY = 'prompter.script';
+const SETTINGS_KEY = 'prompter.settings';
+
+const DEMO_TEXT = `Это суфлёр для записи видео. Вставь сюда сценарий ролика — например, текст, который написал Claude.
+
+Во время записи текст плавно ползёт вверх у самой камеры, и ты просто читаешь его, глядя в объектив. Со стороны выглядит, будто говоришь без бумажки.
+
+В готовом видео этого текста не будет: запись идёт напрямую с камеры, а не с экрана. В файл попадаешь только ты и звук с микрофона.
+
+Тап по экрану — старт и пауза. Свайп по тексту — перемотка. Кнопки внизу — скорость и размер.
+
+Для сторис и рилс держи телефон вертикально — видео запишется вертикальным. Удачной съёмки!`;
+
+/* ---------- state ---------- */
+const defaults = {
+  fontSize: 44,
+  speed: 30,        // px/сек
+  dim: 50,          // % затемнения фона-камеры
+  countdown: 3,     // сек
+  camera: true,
+  autoRec: true,
+  mirror: false
+};
+let settings = { ...defaults };
+try {
+  const raw = localStorage.getItem(SETTINGS_KEY);
+  if (raw) settings = { ...defaults, ...JSON.parse(raw) };
+} catch (e) {}
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+
+let scriptText = '';
+try { scriptText = localStorage.getItem(SCRIPT_KEY) || ''; } catch (e) {}
+
+// ?text=... из URL перекрывает сохранённый текст (и сразу убирается из адреса)
+try {
+  const p = new URLSearchParams(location.search);
+  if (p.get('text')) {
+    scriptText = p.get('text');
+    try { localStorage.setItem(SCRIPT_KEY, scriptText); } catch (e) {}
+    history.replaceState(null, '', location.pathname);
+  }
+} catch (e) {}
+if (!scriptText.trim()) scriptText = DEMO_TEXT;
+
+const secure = window.isSecureContext && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+const recSupported = secure && typeof window.MediaRecorder !== 'undefined';
+
+/* ---------- setup screen ---------- */
+const scriptInput = $('#scriptInput');
+const fontRange = $('#fontRange'), speedRange = $('#speedRange'),
+      dimRange = $('#dimRange'), cdRange = $('#cdRange');
+const camToggle = $('#camToggle'), autoRecToggle = $('#autoRecToggle'), mirrorToggle = $('#mirrorToggle');
+
+scriptInput.value = scriptText;
+fontRange.value = settings.fontSize;
+speedRange.value = settings.speed;
+dimRange.value = settings.dim;
+cdRange.value = settings.countdown;
+
+function setSwitch(el, on) {
+  el.classList.toggle('on', on);
+  el.setAttribute('aria-checked', String(on));
+}
+setSwitch(camToggle, settings.camera && secure);
+setSwitch(autoRecToggle, settings.autoRec);
+setSwitch(mirrorToggle, settings.mirror);
+
+if (!secure) {
+  $('#secureWarn').classList.add('show');
+  settings.camera = false;
+}
+
+function fmtDur(sec) {
+  if (!isFinite(sec) || sec <= 0) return '—';
+  const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function updateSetupMeta() {
+  const words = (scriptInput.value.trim().match(/\S+/g) || []).length;
+  $('#scriptMeta').textContent = words + ' ' + plural(words, 'слово', 'слова', 'слов');
+  $('#fontVal').textContent = settings.fontSize;
+  $('#speedVal').textContent = settings.speed;
+  $('#dimVal').textContent = settings.dim + '%';
+  $('#cdVal').textContent = settings.countdown === 0 ? 'выкл' : settings.countdown + ' сек';
+  // грубая оценка длительности: высота текста / скорость
+  const width = Math.min(window.innerWidth, 900) - 44;
+  const charsPerLine = Math.max(8, width / (settings.fontSize * 0.52));
+  const lines = Math.max(1, Math.ceil(scriptInput.value.length / charsPerLine));
+  const height = lines * settings.fontSize * 1.45;
+  $('#durVal').textContent = '≈ ' + fmtDur(height / settings.speed);
+}
+
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+let saveScriptTimer = null;
+scriptInput.addEventListener('input', () => {
+  updateSetupMeta();
+  clearTimeout(saveScriptTimer);
+  saveScriptTimer = setTimeout(() => {
+    try { localStorage.setItem(SCRIPT_KEY, scriptInput.value); } catch (e) {}
+  }, 400);
+});
+
+fontRange.oninput = () => { settings.fontSize = +fontRange.value; saveSettings(); updateSetupMeta(); };
+speedRange.oninput = () => { settings.speed = +speedRange.value; saveSettings(); updateSetupMeta(); };
+dimRange.oninput = () => { settings.dim = +dimRange.value; saveSettings(); updateSetupMeta(); };
+cdRange.oninput = () => { settings.countdown = +cdRange.value; saveSettings(); updateSetupMeta(); };
+
+function bindSwitch(el, key, guard) {
+  const flip = () => {
+    if (guard && !guard()) return;
+    settings[key] = !settings[key];
+    setSwitch(el, settings[key]);
+    saveSettings();
+  };
+  el.addEventListener('click', flip);
+  el.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+  });
+}
+bindSwitch(camToggle, 'camera', () => {
+  if (!secure) { toast('Камера требует HTTPS или localhost'); return false; }
+  return true;
+});
+bindSwitch(autoRecToggle, 'autoRec');
+bindSwitch(mirrorToggle, 'mirror');
+
+updateSetupMeta();
+
+/* ---------- stage elements ---------- */
+const stage = $('#stage'), setup = $('#setup');
+const cam = $('#cam'), camDim = $('#camDim');
+const viewport = $('#viewport'), scrollEl = $('#scriptScroll');
+const focusLine = $('#focusLine'), progress = $('#progress');
+const topBar = $('#topBar'), bottomBar = $('#bottomBar');
+const playIcon = $('#playIcon'), pauseIcon = $('#pauseIcon');
+const recBtn = $('#recBtn'), recLabel = $('#recLabel');
+const timeInfo = $('#timeInfo');
+const hud = $('#hud');
+
+const FOCUS_RATIO = 0.24; // строка чтения — ближе к верху, к фронтальной камере
+
+let active = false;       // суфлёр открыт
+let playing = false;      // идёт автопрокрутка
+let y = 0;                // прокрученные пиксели
+let textH = 1;            // высота текста (без полей)
+let rafId = null;
+let lastTs = 0;
+let stream = null;
+let recorder = null;
+let recChunks = [];
+let recMime = '';
+let recStartTs = 0;
+let recTimerId = null;
+let recording = false;
+let lastBlob = null, lastBlobUrl = null, lastRecSec = 0;
+let cdTimerId = null;
+let hideBarsTimer = null;
+let hudTimer = null;
+let wakeLock = null;
+
+/* ---------- text rendering ---------- */
+// лёгкая чистка markdown, чтобы текст от Claude читался без служебных символов
+function cleanScript(t) {
+  return t
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/`{1,3}([^`]*)`{1,3}/g, '$1')
+    .replace(/^\s*[-*•]\s+/gm, '• ')
+    .replace(/^\s*\d+\.\s+/gm, (m) => m.trim() + ' ')
+    .trim();
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderScript() {
+  const text = cleanScript(scriptInput.value || DEMO_TEXT);
+  const paras = text.split(/\n{2,}/).map(p =>
+    '<p>' + escapeHtml(p).replace(/\n/g, '<br>') + '</p>'
+  ).join('');
+  scrollEl.innerHTML = paras + '<div class="end-mark">■ конец текста</div>';
+}
+
+function applyFont() {
+  scrollEl.style.fontSize = settings.fontSize + 'px';
+  scrollEl.style.lineHeight = '1.42';
+}
+
+function layout(keepRatio) {
+  const ratio = keepRatio ? (y / textH) : 0;
+  const H = stage.clientHeight || window.innerHeight;
+  const focusY = Math.round(H * FOCUS_RATIO);
+  focusLine.style.top = focusY + 'px';
+  scrollEl.style.paddingTop = focusY + 'px';
+  scrollEl.style.paddingBottom = Math.max(60, H - focusY) + 'px';
+  textH = Math.max(1, scrollEl.scrollHeight - focusY - Math.max(60, H - focusY));
+  y = keepRatio ? Math.min(textH, ratio * textH) : Math.min(y, textH);
+  applyY();
+}
+
+function applyY() {
+  scrollEl.style.transform = 'translate3d(0,' + (-y) + 'px,0)';
+  progress.style.width = Math.min(100, (y / textH) * 100) + '%';
+  updateTimeInfo();
+}
+
+function updateTimeInfo() {
+  const left = fmtDur((textH - y) / settings.speed);
+  if (recording) {
+    timeInfo.textContent = 'осталось ' + left;
+  } else {
+    timeInfo.textContent = 'текст: ' + left;
+  }
+}
+
+/* ---------- scroll engine ---------- */
+function loop(ts) {
+  if (!playing) return;
+  if (!lastTs) lastTs = ts;
+  const dt = Math.min(0.1, (ts - lastTs) / 1000);
+  lastTs = ts;
+  y += settings.speed * dt;
+  if (y >= textH) {
+    y = textH;
+    applyY();
+    setPlaying(false);
+    showHud('■ Конец текста');
+    return;
+  }
+  applyY();
+  rafId = requestAnimationFrame(loop);
+}
+
+function setPlaying(on) {
+  if (on === playing) return;
+  playing = on;
+  playIcon.style.display = on ? 'none' : '';
+  pauseIcon.style.display = on ? '' : 'none';
+  if (on) {
+    lastTs = 0;
+    rafId = requestAnimationFrame(loop);
+    scheduleHideBars();
+  } else {
+    cancelAnimationFrame(rafId);
+    showBars();
+  }
+}
+
+function togglePlay() {
+  if (cdTimerId) { cancelCountdown(); return; }
+  if (!playing) {
+    if (y >= textH) y = 0;
+    const needRec = settings.camera && settings.autoRec && recSupported && stream && !recording && !lastBlob;
+    if (needRec) startRecording();
+    if (settings.countdown > 0) startCountdown(settings.countdown, () => setPlaying(true));
+    else setPlaying(true);
+  } else {
+    setPlaying(false);
+  }
+}
+
+function startCountdown(sec, done) {
+  const cd = $('#countdown'), num = $('#cdNum');
+  let n = sec;
+  cd.classList.add('show');
+  num.textContent = n;
+  cdTimerId = setInterval(() => {
+    n--;
+    if (n <= 0) {
+      cancelCountdown();
+      done();
+    } else {
+      num.textContent = n;
+    }
+  }, 1000);
+}
+function cancelCountdown() {
+  clearInterval(cdTimerId);
+  cdTimerId = null;
+  $('#countdown').classList.remove('show');
+}
+
+/* ---------- bars auto-hide ---------- */
+function showBars() {
+  topBar.classList.remove('hidden');
+  bottomBar.classList.remove('hidden');
+  clearTimeout(hideBarsTimer);
+  if (playing) scheduleHideBars();
+}
+function scheduleHideBars() {
+  clearTimeout(hideBarsTimer);
+  hideBarsTimer = setTimeout(() => {
+    if (playing) {
+      topBar.classList.add('hidden');
+      bottomBar.classList.add('hidden');
+    }
+  }, 3500);
+}
+
+function showHud(text) {
+  hud.textContent = text;
+  hud.classList.add('show');
+  clearTimeout(hudTimer);
+  hudTimer = setTimeout(() => hud.classList.remove('show'), 900);
+}
+
+function toast(text, ms) {
+  const t = $('#toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), ms || 2600);
+}
+
+/* ---------- camera & recording ---------- */
+async function initCamera() {
+  if (!settings.camera || !secure) return;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: true
+    });
+    cam.srcObject = stream;
+    cam.classList.add('show');
+    camDim.style.opacity = settings.dim / 100;
+    try { await cam.play(); } catch (e) {}
+    if (recSupported) recBtn.style.display = '';
+  } catch (err) {
+    let msg = 'Камера недоступна: ' + (err && err.name ? err.name : err);
+    if (err && err.name === 'NotAllowedError') msg = 'Нет доступа к камере/микрофону. Разреши в настройках браузера и открой суфлёр заново.';
+    if (err && err.name === 'NotFoundError') msg = 'Камера не найдена на этом устройстве.';
+    toast(msg, 5000);
+    stopCamera();
+  }
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+    stream = null;
+  }
+  cam.srcObject = null;
+  cam.classList.remove('show');
+  recBtn.style.display = 'none';
+}
+
+function pickMime() {
+  const candidates = [
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4',
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm'
+  ];
+  for (const m of candidates) {
+    try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (e) {}
+  }
+  return '';
+}
+
+function startRecording() {
+  if (!stream || recording || !recSupported) return;
+  discardTake(); // новый дубль затирает несохранённый предыдущий
+  recMime = pickMime();
+  recChunks = [];
+  try {
+    recorder = new MediaRecorder(stream, recMime
+      ? { mimeType: recMime, videoBitsPerSecond: 8_000_000 }
+      : { videoBitsPerSecond: 8_000_000 });
+  } catch (e) {
+    try { recorder = new MediaRecorder(stream); } catch (e2) {
+      toast('Запись не поддерживается этим браузером', 4000);
+      return;
+    }
+  }
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
+  recorder.onstop = onRecorderStop;
+  try { recorder.start(1000); } catch (e) { recorder.start(); }
+  recording = true;
+  recStartTs = Date.now();
+  recBtn.classList.add('recording');
+  recTimerId = setInterval(() => {
+    recLabel.textContent = fmtDur((Date.now() - recStartTs) / 1000);
+  }, 500);
+  recLabel.textContent = '0:00';
+  showHud('● Запись');
+}
+
+function stopRecording() {
+  if (!recording || !recorder) return;
+  recording = false;
+  lastRecSec = (Date.now() - recStartTs) / 1000;
+  clearInterval(recTimerId);
+  recBtn.classList.remove('recording');
+  recLabel.textContent = 'REC';
+  try { recorder.stop(); } catch (e) { onRecorderStop(); }
+}
+
+function onRecorderStop() {
+  if (!recChunks.length) { toast('Запись пустая — ничего не сохранено', 4000); return; }
+  const type = (recorder && recorder.mimeType) || recMime || 'video/webm';
+  lastBlob = new Blob(recChunks, { type });
+  recChunks = [];
+  if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+  lastBlobUrl = URL.createObjectURL(lastBlob);
+  setPlaying(false);
+  openSavePanel();
+}
+
+function fileExt() {
+  return (lastBlob && lastBlob.type.includes('mp4')) ? 'mp4' : 'webm';
+}
+function fileName() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return 'video-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+         '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + '.' + fileExt();
+}
+
+function openSavePanel() {
+  if (!lastBlob) return;
+  const mb = (lastBlob.size / 1048576).toFixed(1);
+  $('#saveMeta').textContent = fmtDur(lastRecSec) + ' · ' + mb + ' МБ · ' + fileExt().toUpperCase() + ' · суфлёра в записи нет';
+  const pv = $('#savePreview');
+  pv.src = lastBlobUrl;
+  const dl = $('#downloadBtn');
+  dl.href = lastBlobUrl;
+  dl.download = fileName();
+  // «Поделиться» с файлом (на iPhone так сохраняют прямо в Фото)
+  const share = $('#shareBtn');
+  let file = null;
+  try { file = new File([lastBlob], fileName(), { type: lastBlob.type }); } catch (e) {}
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    share.style.display = '';
+    share.onclick = async () => {
+      try {
+        await navigator.share({ files: [file] });
+      } catch (e) { /* отменено пользователем */ }
+    };
+  } else {
+    share.style.display = 'none';
+  }
+  $('#savePanel').classList.add('show');
+}
+
+function closeSavePanel() {
+  const pv = $('#savePreview');
+  pv.pause();
+  pv.removeAttribute('src');
+  pv.load();
+  $('#savePanel').classList.remove('show');
+}
+
+function discardTake() {
+  if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+  lastBlob = null;
+  lastBlobUrl = null;
+}
+
+$('#closeSaveBtn').onclick = closeSavePanel;
+$('#retakeBtn').onclick = () => {
+  discardTake();
+  closeSavePanel();
+  y = 0;
+  applyY();
+  toast('Дубль удалён — можно снимать заново');
+};
+$('#downloadBtn').addEventListener('click', () => {
+  setTimeout(() => toast('Файл сохраняется в загрузки'), 300);
+});
+
+recBtn.onclick = () => {
+  if (recording) stopRecording();
+  else startRecording();
+};
+
+/* ---------- wake lock ---------- */
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch (e) {}
+}
+function releaseWakeLock() {
+  if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && active) acquireWakeLock();
+});
+
+/* ---------- enter / exit ---------- */
+async function enterStage() {
+  scriptText = scriptInput.value;
+  renderScript();
+  applyFont();
+  setup.style.display = 'none';
+  stage.classList.add('active');
+  document.body.classList.add('staged');
+  active = true;
+  y = 0;
+  layout(false);
+  viewport.classList.toggle('mirrored', settings.mirror);
+  camDim.style.opacity = settings.dim / 100;
+  showBars();
+  updateTimeInfo();
+  acquireWakeLock();
+  await initCamera();
+  if (document.documentElement.requestFullscreen && !document.fullscreenElement && window.innerWidth > 700) {
+    try { await document.documentElement.requestFullscreen(); } catch (e) {}
+  }
+}
+
+function exitStage() {
+  if (recording) {
+    if (!confirm('Идёт запись. Остановить и выйти?')) return;
+    stopRecording();
+    return; // после остановки откроется панель сохранения; выход — повторным нажатием
+  }
+  cancelCountdown();
+  setPlaying(false);
+  stopCamera();
+  releaseWakeLock();
+  if (document.fullscreenElement && document.exitFullscreen) {
+    try { document.exitFullscreen(); } catch (e) {}
+  }
+  active = false;
+  stage.classList.remove('active');
+  document.body.classList.remove('staged');
+  setup.style.display = '';
+  updateSetupMeta();
+}
+
+$('#startBtn').onclick = enterStage;
+$('#exitBtn').onclick = exitStage;
+$('#fsBtn').onclick = () => {
+  if (document.fullscreenElement) { try { document.exitFullscreen(); } catch (e) {} }
+  else if (document.documentElement.requestFullscreen) {
+    try { document.documentElement.requestFullscreen(); } catch (e) {}
+  } else {
+    toast('Полноэкранный режим здесь недоступен');
+  }
+};
+
+/* ---------- stage controls ---------- */
+$('#playBtn').onclick = togglePlay;
+$('#restartBtn').onclick = () => { y = 0; applyY(); showHud('⟲ В начало'); };
+
+function nudgeSpeed(d) {
+  settings.speed = Math.min(140, Math.max(6, settings.speed + d));
+  saveSettings();
+  speedRange.value = Math.min(100, settings.speed);
+  showHud('Скорость ' + settings.speed);
+  updateTimeInfo();
+}
+$('#slowBtn').onclick = () => nudgeSpeed(-4);
+$('#fastBtn').onclick = () => nudgeSpeed(4);
+
+function nudgeFont(d) {
+  settings.fontSize = Math.min(96, Math.max(22, settings.fontSize + d));
+  saveSettings();
+  fontRange.value = Math.min(80, settings.fontSize);
+  applyFont();
+  layout(true);
+  showHud('Размер ' + settings.fontSize);
+}
+$('#fontMinusBtn').onclick = () => nudgeFont(-4);
+$('#fontPlusBtn').onclick = () => nudgeFont(4);
+
+$('#mirrorBtn').onclick = () => {
+  settings.mirror = !settings.mirror;
+  saveSettings();
+  setSwitch(mirrorToggle, settings.mirror);
+  viewport.classList.toggle('mirrored', settings.mirror);
+  $('#mirrorBtn').classList.toggle('toggled', settings.mirror);
+  showHud(settings.mirror ? 'Зеркало вкл' : 'Зеркало выкл');
+};
+
+/* ---------- touch: tap = play/pause, drag = scrub ---------- */
+let pDown = false, pStartY = 0, pStartScroll = 0, pMoved = false, wasPlaying = false;
+
+viewport.addEventListener('pointerdown', (e) => {
+  if (cdTimerId) { cancelCountdown(); return; }
+  pDown = true; pMoved = false;
+  pStartY = e.clientY;
+  pStartScroll = y;
+  wasPlaying = playing;
+  try { viewport.setPointerCapture(e.pointerId); } catch (err) {}
+});
+viewport.addEventListener('pointermove', (e) => {
+  if (!pDown) return;
+  const dy = e.clientY - pStartY;
+  if (!pMoved && Math.abs(dy) > 8) {
+    pMoved = true;
+    if (playing) setPlaying(false);
+  }
+  if (pMoved) {
+    y = Math.min(textH, Math.max(0, pStartScroll - dy));
+    applyY();
+  }
+});
+viewport.addEventListener('pointerup', () => {
+  if (!pDown) return;
+  pDown = false;
+  if (pMoved) {
+    if (wasPlaying) setPlaying(true);
+  } else {
+    showBars();
+    togglePlay();
+  }
+});
+viewport.addEventListener('pointercancel', () => { pDown = false; });
+
+viewport.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  y = Math.min(textH, Math.max(0, y + e.deltaY));
+  applyY();
+}, { passive: false });
+
+['pointerdown', 'pointermove'].forEach(ev =>
+  stage.addEventListener(ev, () => { if (active) showBars(); })
+);
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown', (e) => {
+  if (!active) return;
+  if (e.target === scriptInput) return;
+  switch (e.key) {
+    case ' ': e.preventDefault(); togglePlay(); break;
+    case 'ArrowUp': e.preventDefault(); nudgeSpeed(2); break;
+    case 'ArrowDown': e.preventDefault(); nudgeSpeed(-2); break;
+    case 'ArrowLeft': e.preventDefault(); y = Math.max(0, y - stage.clientHeight * 0.4); applyY(); break;
+    case 'ArrowRight': e.preventDefault(); y = Math.min(textH, y + stage.clientHeight * 0.4); applyY(); break;
+    case '+': case '=': nudgeFont(2); break;
+    case '-': case '_': nudgeFont(-2); break;
+    case 'r': case 'R': case 'к': case 'К': y = 0; applyY(); break;
+    case 'm': case 'M': case 'ь': case 'Ь': $('#mirrorBtn').click(); break;
+    case 'f': case 'F': case 'а': case 'А': $('#fsBtn').click(); break;
+    case 'Escape':
+      if ($('#savePanel').classList.contains('show')) closeSavePanel();
+      else exitStage();
+      break;
+  }
+});
+
+/* ---------- misc ---------- */
+window.addEventListener('resize', () => { if (active) layout(true); });
+window.addEventListener('orientationchange', () => {
+  if (active) setTimeout(() => layout(true), 250);
+});
+window.addEventListener('beforeunload', (e) => {
+  if (recording) { e.preventDefault(); e.returnValue = ''; }
+});
+window.addEventListener('pagehide', () => {
+  stopCamera();
+  releaseWakeLock();
+});
+</script>
+</body>
+</html>
