@@ -95,6 +95,29 @@ button { cursor: pointer; }
 }
 #scriptInput:focus { border-color: var(--accent-2); }
 
+.remote-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.remote-row button {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  background: var(--paper);
+}
+.remote-row button:hover { border-color: var(--accent-2); color: var(--ink); }
+.remote-row button:disabled { opacity: 0.5; }
+#remoteInfo {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
 .controls {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -531,6 +554,12 @@ body.staged { overflow: hidden; }
 .save-actions .primary { background: var(--accent-2); color: #14120f; border: none; }
 .save-actions .danger { color: var(--accent); }
 .save-actions svg { width: 18px; height: 18px; }
+.save-hint {
+  margin-top: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
 
 /* --- toast --- */
 #toast {
@@ -567,6 +596,11 @@ body.staged { overflow: hidden; }
     <span id="scriptMeta">0 слов</span>
   </div>
   <textarea id="scriptInput" placeholder="Вставь сюда текст ролика — например, сценарий, который написал Claude…"></textarea>
+
+  <div class="remote-row">
+    <button id="refreshRemote">⟳ Проверить новый текст</button>
+    <span id="remoteInfo"></span>
+  </div>
 
   <div class="controls">
     <div class="ctrl">
@@ -627,6 +661,13 @@ body.staged { overflow: hidden; }
       поверх превью: в файл он не попадает в принципе. В готовом видео — только ты и звук с микрофона.</p>
       <p>Текст держится у <b>верхнего края экрана, рядом с фронтальной камерой</b> — взгляд остаётся
       почти в объектив, и не заметно, что ты читаешь.</p>
+    </details>
+    <details>
+      <summary>Текст приходит от Claude сам</summary>
+      <p>Скажи Claude: <b>«отправь этот текст в суфлёр»</b> — и примерно через минуту текст сам
+      появится здесь при открытии страницы (всплывёт плашка «Новый текст от Claude»).
+      Кнопка <b>«⟳ Проверить новый текст»</b> подтягивает свежий сценарий, не перезаходя.
+      Свои правки в поле сохраняются, пока Claude не пришлёт следующий текст.</p>
     </details>
     <details>
       <summary>Как пользоваться</summary>
@@ -722,6 +763,7 @@ body.staged { overflow: hidden; }
         </button>
         <button id="closeSaveBtn">Закрыть</button>
       </div>
+      <div class="save-hint">Через «Сохранить / Поделиться» видео уходит куда скажешь: в Фото, сразу в Instagram или в приложение Claude.</div>
     </div>
   </div>
 </div>
@@ -775,10 +817,12 @@ let scriptText = '';
 try { scriptText = localStorage.getItem(SCRIPT_KEY) || ''; } catch (e) {}
 
 // ?text=... из URL перекрывает сохранённый текст (и сразу убирается из адреса)
+let urlTextUsed = false;
 try {
   const p = new URLSearchParams(location.search);
   if (p.get('text')) {
     scriptText = p.get('text');
+    urlTextUsed = true;
     try { localStorage.setItem(SCRIPT_KEY, scriptText); } catch (e) {}
     history.replaceState(null, '', location.pathname);
   }
@@ -875,6 +919,59 @@ bindSwitch(autoRecToggle, 'autoRec');
 bindSwitch(mirrorToggle, 'mirror');
 
 updateSetupMeta();
+
+/* ---------- текст от Claude (script.json рядом со страницей) ---------- */
+const REMOTE_STAMP_KEY = 'prompter.remoteStamp';
+const remoteInfo = $('#remoteInfo');
+const refreshBtn = $('#refreshRemote');
+
+function fmtStamp(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+// force=true — забрать текст, даже если он уже был загружен (вернуть после своих правок)
+async function checkRemoteScript(force) {
+  let remote = null;
+  try {
+    const r = await fetch('script.json?v=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) remote = await r.json();
+  } catch (e) {}
+  if (!remote || !remote.text) {
+    remoteInfo.textContent = '';
+    return 'none';
+  }
+  const stamp = String(remote.updatedAt || '');
+  const label = (remote.title ? '«' + remote.title + '» · ' : '') + fmtStamp(stamp);
+  let seen = null;
+  try { seen = localStorage.getItem(REMOTE_STAMP_KEY); } catch (e) {}
+  if (force || stamp !== seen) {
+    scriptText = remote.text;
+    scriptInput.value = remote.text;
+    try {
+      localStorage.setItem(SCRIPT_KEY, remote.text);
+      localStorage.setItem(REMOTE_STAMP_KEY, stamp);
+    } catch (e) {}
+    updateSetupMeta();
+    remoteInfo.textContent = 'загружен текст: ' + label;
+    toast('📄 Новый текст от Claude' + (remote.title ? ': «' + remote.title + '»' : ''));
+    return 'new';
+  }
+  remoteInfo.textContent = 'текст от Claude: ' + label;
+  return 'same';
+}
+
+refreshBtn.onclick = async () => {
+  refreshBtn.disabled = true;
+  const res = await checkRemoteScript(true);
+  refreshBtn.disabled = false;
+  if (res === 'none') toast('Не получилось загрузить — проверь интернет');
+};
+
+// при открытии страницы сами проверяем, не прислал ли Claude новый текст
+// (кроме случая, когда текст только что передан через ?text= в адресе)
+if (!urlTextUsed) checkRemoteScript(false);
 
 /* ---------- stage elements ---------- */
 const stage = $('#stage'), setup = $('#setup');
