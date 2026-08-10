@@ -1130,7 +1130,23 @@ function tgCaption() {
     ' · ' + fmtDur(lastRecSec);
 }
 
-function tgSendVideo() {
+// обложка для Telegram: кадр из записи, длинная сторона до 320px (требование Bot API)
+function makeThumb() {
+  return new Promise((resolve) => {
+    try {
+      const pv = $('#savePreview');
+      if (!pv.videoWidth) return resolve(null);
+      const k = Math.min(1, 320 / Math.max(pv.videoWidth, pv.videoHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(pv.videoWidth * k));
+      c.height = Math.max(1, Math.round(pv.videoHeight * k));
+      c.getContext('2d').drawImage(pv, 0, 0, c.width, c.height);
+      c.toBlob((b) => resolve(b), 'image/jpeg', 0.8);
+    } catch (e) { resolve(null); }
+  });
+}
+
+async function tgSendVideo() {
   if (!lastBlob || !tgConfigured()) return;
   const btn = $('#tgSendBtn'), label = $('#tgSendLabel');
   if (lastBlob.size > TG_MAX_BYTES) {
@@ -1142,6 +1158,15 @@ function tgSendVideo() {
   fd.append('chat_id', tgCfg.chatId);
   fd.append('supports_streaming', 'true');
   fd.append('caption', tgCaption());
+  // явные размеры, длительность и обложка — иначе плеер в чате Telegram
+  // угадывает пропорции и показывает вертикальное видео искажённым
+  if (recW && recH) {
+    fd.append('width', String(recW));
+    fd.append('height', String(recH));
+  }
+  if (lastRecSec > 0) fd.append('duration', String(Math.max(1, Math.round(lastRecSec))));
+  const thumb = await makeThumb();
+  if (thumb) fd.append('thumbnail', thumb, 'thumb.jpg');
   fd.append('video', lastBlob, fileName());
   const xhr = new XMLHttpRequest();
   xhr.open('POST', 'https://api.telegram.org/bot' + tgCfg.token + '/sendVideo');
@@ -1196,6 +1221,7 @@ let recStartTs = 0;
 let recTimerId = null;
 let recording = false;
 let lastBlob = null, lastBlobUrl = null, lastRecSec = 0;
+let recW = 0, recH = 0; // реальные размеры кадра записи — нужны Telegram для правильных пропорций
 let cdTimerId = null;
 let hideBarsTimer = null;
 let hudTimer = null;
@@ -1423,6 +1449,12 @@ function startRecording() {
       return;
     }
   }
+  try {
+    const vs = stream.getVideoTracks()[0];
+    const st = vs && vs.getSettings ? vs.getSettings() : {};
+    recW = st.width || 0;
+    recH = st.height || 0;
+  } catch (e) { recW = 0; recH = 0; }
   recorder.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
   recorder.onstop = onRecorderStop;
   try { recorder.start(1000); } catch (e) { recorder.start(); }
@@ -1472,6 +1504,11 @@ function openSavePanel() {
   const mb = (lastBlob.size / 1048576).toFixed(1);
   $('#saveMeta').textContent = fmtDur(lastRecSec) + ' · ' + mb + ' МБ · ' + fileExt().toUpperCase() + ' · суфлёра в записи нет';
   const pv = $('#savePreview');
+  // браузер сам правильно понимает свою запись — берём размеры из декодера,
+  // это надёжнее настроек камеры (учитывает поворот кадра)
+  pv.onloadedmetadata = () => {
+    if (pv.videoWidth) { recW = pv.videoWidth; recH = pv.videoHeight; }
+  };
   pv.src = lastBlobUrl;
   const dl = $('#downloadBtn');
   dl.href = lastBlobUrl;
