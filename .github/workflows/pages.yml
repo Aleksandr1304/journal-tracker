@@ -4,6 +4,17 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+    inputs:
+      script_title:
+        description: "Название ролика (для суфлёра)"
+        required: false
+        default: ""
+      script_text:
+        description: "Текст сценария (абзацы через пустую строку). Пусто = очистить сценарий на сайте."
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 */6 * * *" # автоочистка сценария: каждые 6 часов сайт пересобирается без текста
 
 permissions:
   contents: read
@@ -23,6 +34,21 @@ jobs:
     steps:
       - name: Скачать код
         uses: actions/checkout@v4
+      - name: Сценарий суфлёра — из параметров запуска (в git не хранится)
+        env:
+          S_TITLE: ${{ inputs.script_title }}
+          S_TEXT: ${{ inputs.script_text }}
+        run: |
+          python3 - <<'EOF'
+          import json, os, datetime
+          data = {
+              "title": os.environ.get("S_TITLE") or "",
+              "text": os.environ.get("S_TEXT") or "",
+              "updatedAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+          }
+          json.dump(data, open("script.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+          print("сценарий:", "задан, знаков: %d" % len(data["text"]) if data["text"] else "пустой (очистка)")
+          EOF
       - name: Собрать публичную версию суфлёра (prompter.html, без личного сценария)
         run: |
           python3 - <<'EOF'
