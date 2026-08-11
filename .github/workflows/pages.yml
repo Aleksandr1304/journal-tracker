@@ -23,6 +23,17 @@ jobs:
     steps:
       - name: Скачать код
         uses: actions/checkout@v4
+      - name: Собрать публичную версию суфлёра (prompter.html, без личного сценария)
+        run: |
+          python3 - <<'EOF'
+          import re
+          src = open('teleprompter.html', encoding='utf-8').read()
+          out = re.sub(r'<!-- PERSONAL:START -->.*?<!-- PERSONAL:END -->', '', src, flags=re.S)
+          out = re.sub(r'/\* PERSONAL:START \*/.*?/\* PERSONAL:END \*/', '', out, flags=re.S)
+          assert 'PERSONAL' not in out, 'метки PERSONAL не вырезались полностью'
+          assert 'script.json' not in out, 'в публичной версии остался script.json'
+          open('prompter.html', 'w', encoding='utf-8').write(out)
+          EOF
       - name: Настроить Pages (включается автоматически, если выключен)
         uses: actions/configure-pages@v5
         with:

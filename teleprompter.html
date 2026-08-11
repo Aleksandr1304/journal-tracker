@@ -645,10 +645,12 @@ body.staged { overflow: hidden; }
   </div>
   <textarea id="scriptInput" placeholder="Вставь сюда текст ролика — например, сценарий, который написал Claude…"></textarea>
 
+  <!-- PERSONAL:START -->
   <div class="remote-row">
     <button id="refreshRemote">⟳ Проверить новый текст</button>
     <span id="remoteInfo"></span>
   </div>
+  <!-- PERSONAL:END -->
 
   <div class="controls">
     <div class="ctrl">
@@ -725,6 +727,7 @@ body.staged { overflow: hidden; }
       <p>Текст держится у <b>верхнего края экрана, рядом с фронтальной камерой</b> — взгляд остаётся
       почти в объектив, и не заметно, что ты читаешь.</p>
     </details>
+    <!-- PERSONAL:START -->
     <details>
       <summary>Текст приходит от Claude сам</summary>
       <p>Скажи Claude: <b>«отправь этот текст в суфлёр»</b> — и примерно через минуту текст сам
@@ -732,6 +735,7 @@ body.staged { overflow: hidden; }
       Кнопка <b>«⟳ Проверить новый текст»</b> подтягивает свежий сценарий, не перезаходя.
       Свои правки в поле сохраняются, пока Claude не пришлёт следующий текст.</p>
     </details>
+    <!-- PERSONAL:END -->
     <details>
       <summary>Как пользоваться</summary>
       <ul>
@@ -988,6 +992,7 @@ bindSwitch(mirrorToggle, 'mirror');
 
 updateSetupMeta();
 
+/* PERSONAL:START */
 /* ---------- текст от Claude (script.json рядом со страницей) ---------- */
 const REMOTE_STAMP_KEY = 'prompter.remoteStamp';
 const remoteInfo = $('#remoteInfo');
@@ -1041,6 +1046,7 @@ refreshBtn.onclick = async () => {
 // при открытии страницы сами проверяем, не прислал ли Claude новый текст
 // (кроме случая, когда текст только что передан через ?text= в адресе)
 if (!urlTextUsed) checkRemoteScript(false);
+/* PERSONAL:END */
 
 /* ---------- Telegram: отправка записанного видео своему боту ---------- */
 const TG_KEY = 'prompter.tg';

@@ -7,7 +7,10 @@
 
 Сайт публикуется на GitHub Pages **автоматически при каждом пуше в `main`** (workflow `.github/workflows/pages.yml`, публикация занимает ~минуту):
 
-- Суфлёр: https://aleksandr1304.github.io/journal-tracker/teleprompter.html
+- Суфлёр (личная версия владельца): https://aleksandr1304.github.io/journal-tracker/teleprompter.html
+- Суфлёр (публичная версия для раздачи людям): https://aleksandr1304.github.io/journal-tracker/prompter.html
+
+`prompter.html` **генерируется на публикации** из `teleprompter.html`: workflow вырезает участки между метками `<!-- PERSONAL:START/END -->` (HTML) и `/* PERSONAL:START/END */` (JS) — это автоподгрузка личного сценария из `script.json`. В git `prompter.html` не кладётся (есть в `.gitignore`). Правки функций суфлёра делай в `teleprompter.html`; личные для владельца вещи оборачивай метками PERSONAL, чтобы они не попадали в публичную версию.
 
 ## Суфлёр: как отправить текст («отправь текст в суфлёр»)
 
