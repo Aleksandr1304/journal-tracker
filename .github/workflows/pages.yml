@@ -30,7 +30,11 @@ jobs:
           src = open('teleprompter.html', encoding='utf-8').read()
           out = re.sub(r'<!-- PERSONAL:START -->.*?<!-- PERSONAL:END -->', '', src, flags=re.S)
           out = re.sub(r'/\* PERSONAL:START \*/.*?/\* PERSONAL:END \*/', '', out, flags=re.S)
+          # отдельное хранилище: публичная версия не видит локальные данные личной
+          # (localStorage общий на весь домен, поэтому разводим ключи)
+          out = out.replace("'prompter.", "'prompter.public.")
           assert 'PERSONAL' not in out, 'метки PERSONAL не вырезались полностью'
+          assert "'prompter.public.script'" in out, 'ключи хранилища не разведены'
           open('prompter.html', 'w', encoding='utf-8').write(out)
           EOF
       - name: Настроить Pages (включается автоматически, если выключен)
