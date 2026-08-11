@@ -95,6 +95,31 @@ button { cursor: pointer; }
 }
 #scriptInput:focus { border-color: var(--accent-2); }
 
+/* PERSONAL:START */
+.remote-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.remote-row button {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  background: var(--paper);
+}
+.remote-row button:hover { border-color: var(--accent-2); color: var(--ink); }
+.remote-row button:disabled { opacity: 0.5; }
+#remoteInfo {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+/* PERSONAL:END */
+
 .controls {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -622,6 +647,12 @@ body.staged { overflow: hidden; }
   </div>
   <textarea id="scriptInput" placeholder="Вставь сюда текст ролика — например, сценарий, который написал Claude…"></textarea>
 
+  <!-- PERSONAL:START -->
+  <div class="remote-row">
+    <button id="refreshRemote">⟳ Проверить новый текст</button>
+    <span id="remoteInfo"></span>
+  </div>
+  <!-- PERSONAL:END -->
 
   <div class="controls">
     <div class="ctrl">
@@ -860,12 +891,14 @@ try { scriptText = localStorage.getItem(SCRIPT_KEY) || ''; } catch (e) {}
 // Текст можно передать прямо в адресе: #title=...&text=... (или ?text=...).
 // Часть после # не отправляется даже на сервер — текст нигде не хранится,
 // кроме этого устройства. Адрес сразу очищается.
+let urlTextUsed = false;
 try {
   const fromHash = new URLSearchParams((location.hash || '').replace(/^#/, ''));
   const fromSearch = new URLSearchParams(location.search);
   const linkText = fromHash.get('text') || fromSearch.get('text');
   if (linkText) {
     scriptText = linkText;
+    urlTextUsed = true;
     const linkTitle = fromHash.get('title') || fromSearch.get('title') || '';
     try {
       localStorage.setItem(SCRIPT_KEY, scriptText);
@@ -967,6 +1000,65 @@ bindSwitch(autoRecToggle, 'autoRec');
 bindSwitch(mirrorToggle, 'mirror');
 
 updateSetupMeta();
+
+/* PERSONAL:START */
+/* ---------- личный канал: текст от Claude из ветки script-drop ----------
+   Файл живёт одним коммитом вне основной истории и автоматически
+   очищается через ~6 часов (workflow clear-script.yml). ---------- */
+const REMOTE_URL = 'https://raw.githubusercontent.com/Aleksandr1304/journal-tracker/script-drop/script.json';
+const REMOTE_STAMP_KEY = 'prompter.remoteStamp';
+const remoteInfo = $('#remoteInfo');
+const refreshBtn = $('#refreshRemote');
+
+function fmtStamp(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+// force=true — забрать текст, даже если он уже был загружен (вернуть после своих правок)
+async function checkRemoteScript(force) {
+  let remote = null;
+  try {
+    const r = await fetch(REMOTE_URL + '?v=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) remote = await r.json();
+  } catch (e) {}
+  if (!remote || !remote.text) {
+    remoteInfo.textContent = '';
+    return 'none';
+  }
+  const stamp = String(remote.updatedAt || '');
+  const label = (remote.title ? '«' + remote.title + '» · ' : '') + fmtStamp(stamp);
+  let seen = null;
+  try { seen = localStorage.getItem(REMOTE_STAMP_KEY); } catch (e) {}
+  if (force || stamp !== seen) {
+    scriptText = remote.text;
+    scriptInput.value = remote.text;
+    try {
+      localStorage.setItem(SCRIPT_KEY, remote.text);
+      localStorage.setItem(REMOTE_STAMP_KEY, stamp);
+      localStorage.setItem('prompter.remoteTitle', remote.title || '');
+    } catch (e) {}
+    updateSetupMeta();
+    remoteInfo.textContent = 'загружен текст: ' + label;
+    toast('📄 Новый текст от Claude' + (remote.title ? ': «' + remote.title + '»' : ''));
+    return 'new';
+  }
+  remoteInfo.textContent = 'текст от Claude: ' + label;
+  return 'same';
+}
+
+refreshBtn.onclick = async () => {
+  refreshBtn.disabled = true;
+  const res = await checkRemoteScript(true);
+  refreshBtn.disabled = false;
+  if (res === 'none') toast('Нового текста нет — попроси Claude прислать');
+};
+
+// при открытии страницы сами проверяем, не прислал ли Claude новый текст
+// (кроме случая, когда текст только что передан ссылкой)
+if (!urlTextUsed) checkRemoteScript(false);
+/* PERSONAL:END */
 
 /* ---------- Telegram: отправка записанного видео своему боту ---------- */
 const TG_KEY = 'prompter.tg';
