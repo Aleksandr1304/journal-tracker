@@ -1058,6 +1058,22 @@ refreshBtn.onclick = async () => {
 // при открытии страницы сами проверяем, не прислал ли Claude новый текст
 // (кроме случая, когда текст только что передан ссылкой)
 if (!urlTextUsed) checkRemoteScript(false);
+
+// ...и снова каждый раз, когда возвращаешься к уже открытой вкладке:
+// айфон часто восстанавливает страницу из памяти без перезагрузки,
+// поэтому одной проверки при старте мало
+let lastRemoteCheck = Date.now();
+function recheckRemote() {
+  if (active || recording) return;             // не дёргаем во время съёмки
+  if (Date.now() - lastRemoteCheck < 5000) return;
+  lastRemoteCheck = Date.now();
+  checkRemoteScript(false);
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') recheckRemote();
+});
+window.addEventListener('focus', recheckRemote);
+window.addEventListener('pageshow', recheckRemote);
 /* PERSONAL:END */
 
 /* ---------- Telegram: отправка записанного видео своему боту ---------- */
