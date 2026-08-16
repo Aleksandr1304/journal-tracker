@@ -1019,13 +1019,16 @@ function fmtStamp(iso) {
 // force=true — забрать текст, даже если он уже был загружен (вернуть после своих правок)
 async function checkRemoteScript(force) {
   let remote = null;
+  let failed = false;
   try {
     const r = await fetch(REMOTE_URL + '?v=' + Date.now(), { cache: 'no-store' });
     if (r.ok) remote = await r.json();
-  } catch (e) {}
+    else failed = true;
+  } catch (e) { failed = true; }
   if (!remote || !remote.text) {
-    remoteInfo.textContent = '';
-    return 'none';
+    // молча пропадать нельзя — иначе непонятно, почему текст «не приходит»
+    remoteInfo.textContent = failed ? '⚠ не удалось проверить (нет сети?)' : 'нового текста нет';
+    return failed ? 'error' : 'none';
   }
   const stamp = String(remote.updatedAt || '');
   const label = (remote.title ? '«' + remote.title + '» · ' : '') + fmtStamp(stamp);
@@ -1074,6 +1077,12 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('focus', recheckRemote);
 window.addEventListener('pageshow', recheckRemote);
+
+// ...и просто раз в 45 секунд, пока страница открыта: тогда текст появляется сам,
+// даже если страницу не трогают и никакие события браузера не сработали
+setInterval(() => {
+  if (document.visibilityState === 'visible') recheckRemote();
+}, 45000);
 /* PERSONAL:END */
 
 /* ---------- Telegram: отправка записанного видео своему боту ---------- */
